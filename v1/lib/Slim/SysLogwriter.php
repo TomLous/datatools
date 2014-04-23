@@ -33,6 +33,44 @@ class SysLogWriter extends \Slim\LogWriter
      */
     public function write($message, $level = null)
     {
-        return syslog($level, (string) $message);
+        return syslog($this->mapSlimLogLevelToSysLogLevel($level), (string) $message);
+    }
+
+    private function mapSlimLogLevelToSysLogLevel($level){
+        $syslogLevel = LOG_INFO; // default?
+
+        switch($level){
+            case Log::EMERGENCY:
+                $syslogLevel = LOG_EMERG;
+                break;
+            case Log::ALERT:
+                $syslogLevel = LOG_ALERT;
+                break;
+            case Log::CRITICAL:
+                $syslogLevel = LOG_CRIT;
+                break;
+            case Log::FATAL:
+                $syslogLevel = LOG_CRIT;
+                break;
+            case Log::ERROR:
+                $syslogLevel = LOG_ERR;
+                break;
+            case Log::WARN:
+                $syslogLevel = LOG_WARNING;
+                break;
+            case Log::NOTICE:
+                $syslogLevel = LOG_NOTICE;
+                break;
+             case Log::INFO:
+                $syslogLevel = LOG_INFO;
+                break;
+             case Log::DEBUG:
+                $syslogLevel = LOG_DEBUG;
+                break;
+        }
+
+        return $syslogLevel;
+
+
     }
 }

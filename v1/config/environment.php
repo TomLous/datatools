@@ -9,9 +9,9 @@
 
 $_ENV['APP_ENV'] = null;
 
-if ($_SERVER['HTTP_HOST'] == 'localhost:9080') {
+if (preg_match('/^localhost/', $_SERVER['HTTP_HOST'])) {
     $_ENV['APP_ENV'] = 'development';
-} elseif ($_SERVER['HTTP_HOST'] == 'datatools01.appspot.com') {
+} elseif (preg_match('/datatools01.appspot.com$/', $_SERVER['HTTP_HOST'])) {
     $_ENV['APP_ENV'] = 'production';
 } else {
     throw new Exception('Unknown environment: ' . $_SERVER['HTTP_HOST']);
