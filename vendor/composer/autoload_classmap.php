@@ -6,4 +6,5 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
+    'Slim\\SysLogWriter' => $baseDir . '/v1/lib/Slim/SysLogwriter.php',
 );

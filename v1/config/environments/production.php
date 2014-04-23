@@ -9,6 +9,9 @@
 $app->config('debug', true);
 $app->config('mode', $_ENV['APP_ENV']);
 
+
+$app->config('log.writer', new \Slim\SysLogWriter());
+
 $log = $app->getLog();
 $log->setEnabled(true);
 $log->setLevel(\Slim\Log::DEBUG);
