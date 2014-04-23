@@ -1,11 +1,14 @@
-application: datatools
+application: datatools01
 version: 1
 runtime: php
 api_version: 1
 threadsafe: yes
 
 handlers:
+# env
+- url: /env
+  script: env.php
 
-# Main handler
-- url: v1/.*
+# site root
+- url: /v1/.*
   script: v1/index.php
