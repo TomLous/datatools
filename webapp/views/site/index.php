@@ -3,6 +3,14 @@
  * @var yii\web\View $this
  */
 $this->title = 'My Yii Application';
+
+//print "'".Yii::$app->getUrlManager()->getBaseUrl()."'";
+//print "'".Yii::getAlias('@web')."'";
+//print "'".Yii::getAlias('@webroot')."'";
+//print "'".Yii::setAlias('@web','/')."'";
+//Yii::setAlias('@web','/');
+//Yii::setAlias('@webroot','/');
+
 ?>
 <div class="site-index">
 
