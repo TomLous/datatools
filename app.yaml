@@ -5,23 +5,7 @@ api_version: 1
 threadsafe: yes
 
 handlers:
-# favicon.ico support
-- url: /(favicon\.ico)
-  static_files: webapp/web/\1
-  upload: webapp/web/(favicon\.ico)
-
-- url: /assets/(.+)
-  static_files: webapp/web/assets/\1
-  upload: webapp/web/assets/(.+)
-
-# CSS
-- url: /css
-  static_dir: webapp/web/css
-
-# IMG
-- url: /img
-  static_dir: webapp/web/img
 
 # Main handler
-- url: /.*
-  script: webapp/web/index.php
+- url: v1/.*
+  script: v1/index.php

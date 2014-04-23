@@ -1,0 +1,67 @@
+2014-04-23 08:39:18 [::1][-][-][error][yii\web\HttpException:404] exception 'yii\base\InvalidRouteException' with message 'Unable to resolve the request "".' in /Users/tomlous/Development/PHPStorm/datatools/webapp/vendor/yiisoft/yii2/base/Module.php:429
+Stack trace:
+#0 /Users/tomlous/Development/PHPStorm/datatools/webapp/vendor/yiisoft/yii2/web/Application.php(82): yii\base\Module->runAction('', Array)
+#1 /Users/tomlous/Development/PHPStorm/datatools/webapp/vendor/yiisoft/yii2/base/Application.php(353): yii\web\Application->handleRequest(Object(yii\web\Request))
+#2 /Users/tomlous/Development/PHPStorm/datatools/webapp/web/index.php(12): yii\base\Application->run()
+#3 /Applications/GoogleAppEngineLauncher.app/Contents/Resources/GoogleAppEngine-default.bundle/Contents/Resources/google_appengine/google/appengine/tools/devappserver2/php/setup.php(102): require('/Users/tomlous/...')
+#4 {main}
+
+Next exception 'yii\web\NotFoundHttpException' with message 'Unable to resolve the request "".' in /Users/tomlous/Development/PHPStorm/datatools/webapp/vendor/yiisoft/yii2/web/Application.php:94
+Stack trace:
+#0 /Users/tomlous/Development/PHPStorm/datatools/webapp/vendor/yiisoft/yii2/base/Application.php(353): yii\web\Application->handleRequest(Object(yii\web\Request))
+#1 /Users/tomlous/Development/PHPStorm/datatools/webapp/web/index.php(12): yii\base\Application->run()
+#2 /Applications/GoogleAppEngineLauncher.app/Contents/Resources/GoogleAppEngine-default.bundle/Contents/Resources/google_appengine/google/appengine/tools/devappserver2/php/setup.php(102): require('/Users/tomlous/...')
+#3 {main}
+2014-04-23 08:39:18 [::1][-][-][info][application] $_COOKIE = array (
+  '_csrf' => 'fd31e48e155539dc3e830589feb14fd197453fa02d56b6a54820794023236774s:32:"paJV06Yd_VuVP94TGzIVBQkj50frn7QB";',
+)
+
+$_SERVER = array (
+  'HTTP_COOKIE' => '_csrf=fd31e48e155539dc3e830589feb14fd197453fa02d56b6a54820794023236774s%3A32%3A%22paJV06Yd_VuVP94TGzIVBQkj50frn7QB%22%3B',
+  'REQUEST_ID_HASH' => 'DE3CC353',
+  'HTTP_ACCEPT_LANGUAGE' => 'en-GB,en-US;q=0.8,en;q=0.6,nl;q=0.4',
+  'REDIRECT_STATUS' => '1',
+  'SERVER_SOFTWARE' => 'Development/2.0',
+  'REQUEST_METHOD' => 'GET',
+  'PATH_INFO' => '/',
+  'SERVER_PROTOCOL' => 'HTTP/1.1',
+  'QUERY_STRING' => '',
+  'DEFAULT_VERSION_HOSTNAME' => 'localhost:9080',
+  'CONTENT_LENGTH' => '0',
+  'APPENGINE_RUNTIME' => 'php',
+  'TZ' => 'UTC',
+  'SERVER_NAME' => 'localhost',
+  'REMOTE_ADDR' => '::1',
+  'REQUEST_LOG_ID' => 'd6087c5da3db15b9074336bd9aaa909028bd80aa0eab2033f56f3dfb7f2ecd276efaf5aeafb2da2d1d5',
+  'INSTANCE_ID' => '07ee32b7afe7eaad3e3066bcc3642ff4ec8b',
+  'SERVER_PORT' => '9080',
+  'USER_IS_ADMIN' => '0',
+  'CURRENT_MODULE_ID' => 'default',
+  'SCRIPT_FILENAME' => '/Users/tomlous/Development/PHPStorm/datatools/webapp/web/index.php',
+  'CURRENT_VERSION_ID' => '1.351928575377813616',
+  'USER_ORGANIZATION' => '',
+  'HTTP_USER_AGENT' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36',
+  'HTTP_HOST' => 'localhost:9080',
+  'HTTPS' => 'off',
+  'USER_ID' => '',
+  'HTTP_CACHE_CONTROL' => 'max-age=0',
+  'HTTP_CONTENT_LENGTH' => '0',
+  'USER_EMAIL' => '',
+  'REQUEST_URI' => '/',
+  'HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+  'DATACENTER' => 'us1',
+  'APPLICATION_ID' => 'dev~datatools',
+  'HTTP_X_APPENGINE_COUNTRY' => 'ZZ',
+  'AUTH_DOMAIN' => 'gmail.com',
+  'USER_NICKNAME' => '',
+  '__CF_USER_TEXT_ENCODING' => '0x1F5:0:0',
+  'PHP_SELF' => '/webapp/web/index.php',
+  'REQUEST_TIME_FLOAT' => 1398242358.8182671,
+  'REQUEST_TIME' => 1398242358,
+  'argv' => 
+  array (
+  ),
+  'argc' => 0,
+  'DOCUMENT_ROOT' => '/Users/tomlous/Development/PHPStorm/datatools',
+  'SCRIPT_NAME' => '/webapp/web/index.php',
+)
