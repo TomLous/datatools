@@ -5,10 +5,14 @@ api_version: 1
 threadsafe: yes
 
 handlers:
-# env
+- url: /favicon\.ico
+  static_files: favicon.ico
+  upload: favicon\.ico
+
+# env info
 - url: /env
   script: env.php
 
-# site root
+# api root
 - url: /v1/.*
   script: v1/index.php

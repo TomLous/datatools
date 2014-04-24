@@ -6,5 +6,8 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
+    'DataInterface\\DataInterface' => $baseDir . '/v1/lib/DataInterface/DataInterface.php',
+    'DataInterface\\Exception\\IncompatibleInterfaceException' => $baseDir . '/v1/lib/DataInterface/Exception/IncompatibleInterfaceException.php',
+    'DataInterface\\Geocodefarm' => $baseDir . '/v1/lib/DataInterface/Geocodefarm.php',
     'Slim\\SysLogWriter' => $baseDir . '/v1/lib/Slim/SysLogwriter.php',
 );

@@ -11,5 +11,14 @@ $app->get('/hello/:name', function ($name) {
     echo "Hello, $name in ".$_ENV['APP_ENV'];
 });
 
-$app->getLog()->log(\Slim\Log::DEBUG, 'Test');
+$app->get('/DataInterface/:api/:endpoint/:request', function ($api, $endpoint, $request) {
+    $className = '\\DataInterface\\' . $api;
+    $apiInstance = new $className();
+    $data = $apiInstance->$endpoint($request);
+
+    print_r($data);
+
+
+});
+
 $app->run();
