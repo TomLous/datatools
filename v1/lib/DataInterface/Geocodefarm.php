@@ -4,33 +4,71 @@
  * User: tomlous
  * Date: 23/04/14
  * Time: 15:38
+ * @todo fix section
  */
 
 namespace DataInterface;
 
 
 use DataInterface\Exception\IncompatibleInterfaceException;
+use DataInterface\Exception\IncompatibleInputException;
+use models\GeoLocation;
 
 class Geocodefarm extends DataInterface
 {
-
+    /**
+     * @var null apiKey for communication with Geocodefarm
+     */
     protected $apiKey = null; // account API KEY
+
+    /**
+     * @var int limit number of requests per day
+     * @todo do something with this info
+     */
     protected $limit = 0; // max. number of requests
+
+    /**
+     * @var null time of day limits get reset
+     * @todo do something with this info
+     */
     protected $limitResetTime = null; // time of reset
 
+    /**
+     * @var int remainingQueries
+     * @todo do something with this info
+     */
     protected static $remainingQueries = 0;
+
+    /**
+     * @var int usedQueries
+     * @todo do something with this info
+     */
     protected static $usedQueries = 0;
 
+    /**
+     * Constanst used for this API
+     */
     const apiUrl = 'https://www.geocodefarm.com/api/';
     const returnType = 'json';
 
-
-    public function forwardCoding($encodingString)
+    /**
+     * Request geoloaction for address string, passed as addressString property in array
+     * @param array $params
+     * @return array|null
+     * @throws Exception\IncompatibleInputException
+     */
+    public function forwardCoding($params = array())
     {
-        // create a new URL for this request e.g. https://www.geocodefarm.com/api/forward/json/[key]/address
-        $requestUrl = $this->buildUrl('forward', array($encodingString));
+        // sanitize input params
+        if (!is_array($params) || !isset($params['addressString'])) {
+            throw new IncompatibleInputException('Missing addressString property');
+        }
+        $addressString = $params['addressString'];
 
-        //
+        // create a new URL for this request e.g. https://www.geocodefarm.com/api/forward/json/[key]/address
+        $requestUrl = $this->buildUrl('forward', array($addressString));
+
+        // do request to Geocodefarms
         $json = $this->doRequestAndInterpretJSON($requestUrl);
 
         return $json;
@@ -45,10 +83,12 @@ class Geocodefarm extends DataInterface
      */
     private function doRequestAndInterpretJSON($url)
     {
+        $returnData = array();
+
         // Retrieve JSON for url
         $json = $this->doJSONGetRequest($url);
 
-        if(!array_key_exists('geocoding_results', $json)){
+        if (!array_key_exists('geocoding_results', $json)) {
             throw new IncompatibleInterfaceException('Missing  geocoding_results in result from request to ' . $url);
         }
 
@@ -63,24 +103,42 @@ class Geocodefarm extends DataInterface
             }
         }
 
-        // Hanlde Status Info
+        // Handle Status Info
         $statusInfo = $json['STATUS'];
 
-        if($statusInfo['status'] == 'FAILED, ACCESS_DENIED'){
-            throw new IncompatibleInterfaceException('Access Denied to service reason: '.$statusInfo['access'].' for request to '.$url);
-        }
-        else if($statusInfo['status'] == 'FAILED, NO_RESULTS'){
+        if ($statusInfo['status'] == 'FAILED, ACCESS_DENIED') {
+            throw new IncompatibleInterfaceException('Access Denied to service reason: ' . $statusInfo['access'] . ' for request to ' . $url);
+        } else if ($statusInfo['status'] == 'FAILED, NO_RESULTS') {
             return null;
         }
 
+        // @todo do something with this info
         // Set Account Info
         $accountInfo = $json['ACCOUNT'];
 
         self::$remainingQueries = (int)$accountInfo['remaining_queries'];
         self::$usedQueries = (int)$accountInfo['used_today'];
 
+        // Lat / Long
+        $coordinateInfo = $json['COORDINATES'];
 
-        return $json;
+        $geoLocation = new GeoLocation($coordinateInfo['latitude'], $coordinateInfo['longitude']);
+        $returnData['GeoLocation'] = $geoLocation;
+
+        // @todo : finish this
+//
+//
+//        ADDRESS: {
+//        address_provided: "Spinel 7 2651 RV Berkel en Rodenrijd Nederland",
+//address_returned: "Spinel 7, 2651 RV Berkel en Rodenrijs, The Netherlands",
+//accuracy: "VERY ACCURATE"
+//},
+//        COORDINATES: {
+//        latitude: "52.0063958959229",
+//longitude: "4.49312925980542"
+//},
+
+        return $returnData;
         // @todo return address & geo location
 
 
@@ -92,9 +150,10 @@ class Geocodefarm extends DataInterface
      * @param array $properties
      * @return string
      */
-    private function buildUrl($endpoint, $properties=array()){
-        $parameters = implode('/',array_map('urlencode', $properties));
-        $url = self::apiUrl . $endpoint . '/' . self::returnType .'/'.$this->apiKey . '/' .$parameters;
+    private function buildUrl($endpoint, $properties = array())
+    {
+        $parameters = implode('/', array_map('rawurlencode', $properties));
+        $url = self::apiUrl . $endpoint . '/' . self::returnType . '/' . $this->apiKey . '/' . $parameters;
         return $url;
     }
 
@@ -108,22 +167,11 @@ class Geocodefarm extends DataInterface
     private function doJSONGetRequest($url)
     {
         // We don't use CURL, since GAE won't support it
-//        //  Initiate curl
 //        $ch = curl_init();
-//
-//        // Disable SSL verification
 //        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-//
-//        // Will return the response, if false it print the response
 //        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-//
-//        // Set the url
 //        curl_setopt($ch, CURLOPT_URL, $url);
-//
-//        // Execute
 //        $result = curl_exec($ch);
-//
-//        // Close connection
 //        curl_close($ch);
 
         // retrieve data from url

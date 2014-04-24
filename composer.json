@@ -3,6 +3,6 @@
         "slim/slim": "2.*"
     },
     "autoload": {
-        "classmap": ["v1/lib/"]
+        "classmap": ["v1/lib/", "v1/models"]
     }
 }

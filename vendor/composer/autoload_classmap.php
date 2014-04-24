@@ -7,7 +7,10 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'DataInterface\\DataInterface' => $baseDir . '/v1/lib/DataInterface/DataInterface.php',
+    'DataInterface\\Exception\\IncompatibleInputException' => $baseDir . '/v1/lib/DataInterface/Exception/IncompatibleInputException.php',
     'DataInterface\\Exception\\IncompatibleInterfaceException' => $baseDir . '/v1/lib/DataInterface/Exception/IncompatibleInterfaceException.php',
     'DataInterface\\Geocodefarm' => $baseDir . '/v1/lib/DataInterface/Geocodefarm.php',
     'Slim\\SysLogWriter' => $baseDir . '/v1/lib/Slim/SysLogwriter.php',
+    'models\\Address' => $baseDir . '/v1/models/Address.php',
+    'models\\GeoLocation' => $baseDir . '/v1/models/GeoLocation.php',
 );

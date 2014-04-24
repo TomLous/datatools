@@ -11,12 +11,20 @@ $app->get('/hello/:name', function ($name) {
     echo "Hello, $name in ".$_ENV['APP_ENV'];
 });
 
-$app->get('/DataInterface/:api/:endpoint/:request', function ($api, $endpoint, $request) {
-    $className = '\\DataInterface\\' . $api;
-    $apiInstance = new $className();
-    $data = $apiInstance->$endpoint($request);
+$app->post('/DataInterface/:api/:endpoint', function ($api, $endpoint) use($app){
+    $data = null;
+    try{
+        $className = '\\DataInterface\\' . $api;
+        $apiInstance = new $className();
 
-    print_r($data);
+        $data = $apiInstance->$endpoint($app->request()->params());
+    }catch (Exception $e){
+        $data = array('message'=>$e->getMessage());
+    }
+    header("Content-Type: application/json");
+    print json_encode($data);
+
+
 
 
 });
