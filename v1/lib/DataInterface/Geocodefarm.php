@@ -12,6 +12,7 @@ namespace DataInterface;
 
 use DataInterface\Exception\IncompatibleInterfaceException;
 use DataInterface\Exception\IncompatibleInputException;
+use models\Address;
 use models\GeoLocation;
 
 class Geocodefarm extends DataInterface
@@ -52,7 +53,7 @@ class Geocodefarm extends DataInterface
     const returnType = 'json';
 
     /**
-     * Request geoloaction for address string, passed as addressString property in array
+     * Request geoloaction for address string, passed as addressString or address (\Address) property in array
      * @param array $params
      * @return array|null
      * @throws Exception\IncompatibleInputException
@@ -60,18 +61,34 @@ class Geocodefarm extends DataInterface
     public function forwardCoding($params = array())
     {
         // sanitize input params
-        if (!is_array($params) || !isset($params['addressString'])) {
+        if (!is_array($params)){
             throw new IncompatibleInputException('Missing addressString property');
         }
-        $addressString = $params['addressString'];
+
+        // define params
+        $addressString = null;
+        $inputAddress= null;
+
+        if(isset($params['addressString']) && is_scalar($params['addressString'])) {
+            $addressString = $params['addressString'];
+            $inputAddress = new Address();
+            $inputAddress->setAddressString($addressString);
+            $inputAddress->parseString();
+        }
+        elseif(isset($params['address']) && $params['address'] instanceof Address) {
+            $inputAddress = $params['address'];
+            $addressString = $inputAddress->getAddressString();
+        }
 
         // create a new URL for this request e.g. https://www.geocodefarm.com/api/forward/json/[key]/address
         $requestUrl = $this->buildUrl('forward', array($addressString));
 
         // do request to Geocodefarms
-        $json = $this->doRequestAndInterpretJSON($requestUrl);
+        $returnData = $this->doRequestAndInterpretJSON($requestUrl);
 
-        return $json;
+        $returnData['AddressProvided'] = $inputAddress;
+
+        return $returnData;
     }
 
 
@@ -84,6 +101,7 @@ class Geocodefarm extends DataInterface
     private function doRequestAndInterpretJSON($url)
     {
         $returnData = array();
+        $returnData['Meta'] = array();
 
         // Retrieve JSON for url
         $json = $this->doJSONGetRequest($url);
@@ -122,26 +140,35 @@ class Geocodefarm extends DataInterface
         // Lat / Long
         $coordinateInfo = $json['COORDINATES'];
 
-        $geoLocation = new GeoLocation($coordinateInfo['latitude'], $coordinateInfo['longitude']);
+        $geoLocation = null;
+
+        if(is_numeric($coordinateInfo['latitude']) && is_numeric($coordinateInfo['longitude'])){
+            $geoLocation = new GeoLocation($coordinateInfo['latitude'], $coordinateInfo['longitude']);
+        }
+
         $returnData['GeoLocation'] = $geoLocation;
 
-        // @todo : finish this
-//
-//
-//        ADDRESS: {
-//        address_provided: "Spinel 7 2651 RV Berkel en Rodenrijd Nederland",
-//address_returned: "Spinel 7, 2651 RV Berkel en Rodenrijs, The Netherlands",
-//accuracy: "VERY ACCURATE"
-//},
-//        COORDINATES: {
-//        latitude: "52.0063958959229",
-//longitude: "4.49312925980542"
-//},
+        // Address Info
+        $addressInfo = $json['ADDRESS'];
+        $address = new Address();
+
+
+        if(strlen($addressInfo['address_returned']) > 0){
+            $address->setAddressString($addressInfo['address_returned']);
+            $address->parseString();
+        }
+
+        $returnData['AddressReturned'] = $address;
+
+        $returnData['Meta']['resultAccuracy'] = $this->translateAccuracy($addressInfo['accuracy']);
+
+
+        // Statistics
+        $statisticsInfo = isset($json['STATISTICS'])?$json['STATISTICS']:array();
+        $returnData['Meta']['loadTime'] = isset($statisticsInfo['load_time'])?$statisticsInfo['load_time']:null;
+
 
         return $returnData;
-        // @todo return address & geo location
-
-
     }
 
     /**
@@ -188,5 +215,32 @@ class Geocodefarm extends DataInterface
         return $json;
     }
 
+    private function translateAccuracy($accuracyString){
+        $accuracy = 0.0;
 
-} 
+        switch($accuracyString){
+            // This is the highest level of accuracy and usually indicates a spot-on match.
+            case 'VERY ACCURATE':
+                $accuracy = 1.0;
+                break;
+            // This is the second highest level of accuracy and usually indicates a range match, within a few hundred feet most.
+            case 'GOOD ACCURACY':
+                $accuracy = 0.7;
+                break;
+            //  This is the third level of accuracy and usually indicates a geographical area match, such as the metro area, town, or city.
+            case 'ACCURATE':
+                $accuracy = 0.3;
+                break;
+            // The accuracy of this result is unable to be determined and an exact match may or may not have been obtained.
+            case 'UNKNOWN ACCURACY':
+                $accuracy = 0.1;
+                break;
+
+        }
+
+       return $accuracy;
+
+    }
+
+
+}
