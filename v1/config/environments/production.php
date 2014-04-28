@@ -32,9 +32,20 @@ $log->setLevel(\Slim\Log::DEBUG);
  */
 $dataInterface = array(
     'Geocodefarm' => array(
-        'apiKey' => $GEOCODEFARM_APIKEY, // account API KEY
-        'limit' => $GEOCODEFARM_LIMIT, // max. number of requests
-        'limitResetTime' => $GEOCODEFARM_LIMIT_RESET_TIME // time of reset
+        'Geocodefarm' => array(
+            'apiKey' => $GEOCODEFARM_APIKEY, // account API KEY
+            'limit' => $GEOCODEFARM_LIMIT, // max. number of requests
+            'limitResetTime' => $GEOCODEFARM_LIMIT_RESET_TIME // time of reset
+        ),
+    ),
+    'GoogleMaps' => array(
+        'GoogleMapsPlaces' => array(
+            'apiKey' => $GOOGLE_MAPS_PLACES_APIKEY, // server api key as created in developer console
+            'limit'  => $GOOGLE_MAPS_PLACES_LIMIT, // max. request units per 24h (1000, but 100000 after registering)
+            'nearbysearchUnit' => $GOOGLE_MAPS_PLACES_NEARBYSEARCH_UNIT, // request unit for nearby search (1)
+            'textsearchUnit' => $GOOGLE_MAPS_PLACES_TEXTSEARCH_UNIT,  // request unit for text search (10)
+            'radarsearchUnit' =>  $GOOGLE_MAPS_PLACES_RADARSEARCH_UNIT // request unit for radar search (5)
+        ),
     )
 );
 $app->environment()['DataInterface'] = $dataInterface;
