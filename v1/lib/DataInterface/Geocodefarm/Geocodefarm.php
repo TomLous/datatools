@@ -7,9 +7,10 @@
  * @todo fix section
  */
 
-namespace DataInterface;
+namespace DataInterface\Geocodefarm;
 
 
+use DataInterface\DataInterface;
 use DataInterface\Exception\IncompatibleInterfaceException;
 use DataInterface\Exception\IncompatibleInputException;
 use models\Address;
@@ -55,8 +56,8 @@ class Geocodefarm extends DataInterface
     /**
      * Request geoloaction for address string, passed as addressString or address (\Address) property in array
      * @param array $params
+     * @throws \DataInterface\Exception\IncompatibleInputException
      * @return array|null
-     * @throws Exception\IncompatibleInputException
      */
     public function forwardCoding($params = array())
     {
@@ -96,8 +97,8 @@ class Geocodefarm extends DataInterface
     /**
      * Request address for latitude, longitude variable, passed as doubles (latitude, longitude) or geoLocation (\GeoLocation) property in array
      * @param array $params
+     * @throws \DataInterface\Exception\IncompatibleInputException
      * @return array|null
-     * @throws Exception\IncompatibleInputException
      */
     public function reverseCoding($params = array()){
         // sanitize input params
@@ -137,12 +138,11 @@ class Geocodefarm extends DataInterface
     }
 
 
-
     /**
      * Makes a request with url to geocodefarm and interprets the meta data of the result
      * @param $url
+     * @throws \DataInterface\Exception\IncompatibleInterfaceException
      * @return array|null
-     * @throws Exception\IncompatibleInterfaceException
      */
     private function doRequestAndInterpretJSON($url)
     {
@@ -203,11 +203,16 @@ class Geocodefarm extends DataInterface
             $address->setAddressString($addressInfo['address_returned']);
             $address->parseString();
         }
+        elseif(strlen($addressInfo['address']) > 0){
+            $address->setAddressString($addressInfo['address']);
+            $address->parseString();
+        }
 
         $returnData['AddressReturned'] = $address;
 
         $returnData['Meta']['resultAccuracy'] = $this->translateAccuracy($addressInfo['accuracy']);
 
+//        $returnData['Meta']['raw'] = $json;
 
         // Statistics
         $statisticsInfo = isset($json['STATISTICS'])?$json['STATISTICS']:array();

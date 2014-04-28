@@ -75,7 +75,7 @@ class DataInterface
      */
     public static function createSlimAPIRoutes(Slim $app, $path = 'DataInterface')
     {
-        $route = $app->post('/' . $path . '/:api/:endpoint', function ($api, $endpoint) use ($app) {
+        $route = $app->post('/' . $path . '/:directory/:api/:endpoint', function ($directory, $api, $endpoint) use ($app) {
 
             // Set basic return data for the API
             $data = array();
@@ -86,10 +86,10 @@ class DataInterface
             $data['Meta']['ip'] = $app->request()->getIp();
 
             try {
-                $className = '\\DataInterface\\' . $api;
+                $className = '\\DataInterface\\' . $directory . '\\' . $api;
 
                 if (!class_exists($className)) {
-                    throw new IncompatibleInputException('Non existing DataInterface API: `' . $api . '`');
+                    throw new IncompatibleInputException('Non existing DataInterface API: `' . $directory . '\\'. $api . '`');
                 }
 
                 $apiInstance = new $className();
