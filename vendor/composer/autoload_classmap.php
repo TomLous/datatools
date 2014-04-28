@@ -6,10 +6,13 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
+    'DataInterface\\BingMapsNavteqSpatialSearch' => $baseDir . '/v1/lib/DataInterface/BingMaps/BingMapsNavteqSpatialSearch.php',
     'DataInterface\\DataInterface' => $baseDir . '/v1/lib/DataInterface/DataInterface.php',
     'DataInterface\\Exception\\IncompatibleInputException' => $baseDir . '/v1/lib/DataInterface/Exception/IncompatibleInputException.php',
     'DataInterface\\Exception\\IncompatibleInterfaceException' => $baseDir . '/v1/lib/DataInterface/Exception/IncompatibleInterfaceException.php',
-    'DataInterface\\Geocodefarm' => $baseDir . '/v1/lib/DataInterface/Geocodefarm.php',
+    'DataInterface\\Geocodefarm\\Geocodefarm' => $baseDir . '/v1/lib/DataInterface/Geocodefarm/Geocodefarm.php',
+    'DataInterface\\GoogleMaps\\GoogleMapsPlaceTypes' => $baseDir . '/v1/lib/DataInterface/GoogleMaps/GoogleMapsPlaceTypes.php',
+    'DataInterface\\GoogleMaps\\GoogleMapsPlaces' => $baseDir . '/v1/lib/DataInterface/GoogleMaps/GoogleMapsPlaces.php',
     'Slim\\SysLogWriter' => $baseDir . '/v1/lib/Slim/SysLogwriter.php',
     'models\\Address' => $baseDir . '/v1/models/Address.php',
     'models\\GeoLocation' => $baseDir . '/v1/models/GeoLocation.php',
