@@ -62,7 +62,7 @@ class Geocodefarm extends DataInterface
     {
         // sanitize input params
         if (!is_array($params)){
-            throw new IncompatibleInputException('Missing addressString property');
+            throw new IncompatibleInputException('Missing properties');
         }
 
         // define params
@@ -78,6 +78,8 @@ class Geocodefarm extends DataInterface
         elseif(isset($params['address']) && $params['address'] instanceof Address) {
             $inputAddress = $params['address'];
             $addressString = $inputAddress->getAddressString();
+        }else{
+            throw new IncompatibleInputException('Missing addressString or address property');
         }
 
         // create a new URL for this request e.g. https://www.geocodefarm.com/api/forward/json/[key]/address
@@ -90,6 +92,50 @@ class Geocodefarm extends DataInterface
 
         return $returnData;
     }
+
+    /**
+     * Request address for latitude, longitude variable, passed as doubles (latitude, longitude) or geoLocation (\GeoLocation) property in array
+     * @param array $params
+     * @return array|null
+     * @throws Exception\IncompatibleInputException
+     */
+    public function reverseCoding($params = array()){
+        // sanitize input params
+        if (!is_array($params)){
+            throw new IncompatibleInputException('Missing properties');
+        }
+
+        // define params
+        $latitude = 0;
+        $longitude = 0;
+        $inputGeoLocation= null;
+
+        if(isset($params['latitude']) && is_scalar($params['latitude']) && isset($params['longitude']) && is_scalar($params['longitude'])) {
+            $latitude = $params['latitude'];
+            $longitude = $params['longitude'];
+            $inputGeoLocation = new GeoLocation($latitude, $longitude);
+
+        }
+        elseif(isset($params['geoLocation']) && $params['geoLocation'] instanceof GeoLocation) {
+            $inputGeoLocation = $params['geoLocation'];
+            $latitude = $inputGeoLocation->getLatitude();
+            $longitude = $inputGeoLocation->getLongitude();
+        }
+        else{
+            throw new IncompatibleInputException('Missing latitude & longitude or geoLocation property');
+        }
+
+        // create a new URL for this request e.g. https://www.geocodefarm.com/api/reverse/json/[key]/latitude/longitude
+        $requestUrl = $this->buildUrl('reverse', array($latitude, $longitude));
+
+        // do request to Geocodefarms
+        $returnData = $this->doRequestAndInterpretJSON($requestUrl);
+
+        $returnData['GeoLocationProvided'] = $inputGeoLocation;
+
+        return $returnData;
+    }
+
 
 
     /**
@@ -146,7 +192,7 @@ class Geocodefarm extends DataInterface
             $geoLocation = new GeoLocation($coordinateInfo['latitude'], $coordinateInfo['longitude']);
         }
 
-        $returnData['GeoLocation'] = $geoLocation;
+        $returnData['GeoLocationReturned'] = $geoLocation;
 
         // Address Info
         $addressInfo = $json['ADDRESS'];
