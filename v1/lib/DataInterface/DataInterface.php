@@ -18,7 +18,7 @@ use Slim\Slim;
  * Class DataInterface
  * @package DataInterface
  */
-class DataInterface
+abstract class DataInterface
 {
 
     /**
@@ -26,6 +26,18 @@ class DataInterface
      * @var null|Slim
      */
     private $slim;
+
+    /**
+     * @var int remainingQueries
+     * @todo do something with this info
+     */
+    protected static $remainingQueries = null;
+
+    /**
+     * @var int usedQueries
+     * @todo do something with this info
+     */
+    protected static $usedQueries = 0;
 
 
     /**
@@ -135,4 +147,8 @@ class DataInterface
         });
         return $route;
     }
-} 
+
+//    protected abstract static function setRemainingQueries($number);
+//    protected abstract static function setUsedQueries($number);
+//    protected abstract static function incrementUsedQueries($number);
+}

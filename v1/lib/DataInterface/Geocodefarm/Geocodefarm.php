@@ -13,6 +13,7 @@ namespace DataInterface\Geocodefarm;
 use DataInterface\DataInterface;
 use DataInterface\Exception\IncompatibleInterfaceException;
 use DataInterface\Exception\IncompatibleInputException;
+use DataInterface\Exception\InterfaceQuotaExceededException;
 use models\Address;
 use models\GeoLocation;
 
@@ -35,17 +36,6 @@ class Geocodefarm extends DataInterface
      */
     protected $limitResetTime = null; // time of reset
 
-    /**
-     * @var int remainingQueries
-     * @todo do something with this info
-     */
-    protected static $remainingQueries = 0;
-
-    /**
-     * @var int usedQueries
-     * @todo do something with this info
-     */
-    protected static $usedQueries = 0;
 
     /**
      * Constanst used for this API
@@ -62,24 +52,23 @@ class Geocodefarm extends DataInterface
     public function forwardCoding($params = array())
     {
         // sanitize input params
-        if (!is_array($params)){
+        if (!is_array($params)) {
             throw new IncompatibleInputException('Missing properties');
         }
 
         // define params
         $addressString = null;
-        $inputAddress= null;
+        $inputAddress = null;
 
-        if(isset($params['addressString']) && is_scalar($params['addressString'])) {
+        if (isset($params['addressString']) && is_scalar($params['addressString'])) {
             $addressString = $params['addressString'];
             $inputAddress = new Address();
             $inputAddress->setAddressString($addressString);
             $inputAddress->parseString();
-        }
-        elseif(isset($params['address']) && $params['address'] instanceof Address) {
+        } elseif (isset($params['address']) && $params['address'] instanceof Address) {
             $inputAddress = $params['address'];
             $addressString = $inputAddress->getAddressString();
-        }else{
+        } else {
             throw new IncompatibleInputException('Missing addressString or address property');
         }
 
@@ -100,29 +89,28 @@ class Geocodefarm extends DataInterface
      * @throws \DataInterface\Exception\IncompatibleInputException
      * @return array|null
      */
-    public function reverseCoding($params = array()){
+    public function reverseCoding($params = array())
+    {
         // sanitize input params
-        if (!is_array($params)){
+        if (!is_array($params)) {
             throw new IncompatibleInputException('Missing properties');
         }
 
         // define params
         $latitude = 0;
         $longitude = 0;
-        $inputGeoLocation= null;
+        $inputGeoLocation = null;
 
-        if(isset($params['latitude']) && is_scalar($params['latitude']) && isset($params['longitude']) && is_scalar($params['longitude'])) {
+        if (isset($params['latitude']) && is_scalar($params['latitude']) && isset($params['longitude']) && is_scalar($params['longitude'])) {
             $latitude = $params['latitude'];
             $longitude = $params['longitude'];
             $inputGeoLocation = new GeoLocation($latitude, $longitude);
 
-        }
-        elseif(isset($params['geoLocation']) && $params['geoLocation'] instanceof GeoLocation) {
+        } elseif (isset($params['geoLocation']) && $params['geoLocation'] instanceof GeoLocation) {
             $inputGeoLocation = $params['geoLocation'];
             $latitude = $inputGeoLocation->getLatitude();
             $longitude = $inputGeoLocation->getLongitude();
-        }
-        else{
+        } else {
             throw new IncompatibleInputException('Missing latitude & longitude or geoLocation property');
         }
 
@@ -142,6 +130,7 @@ class Geocodefarm extends DataInterface
      * Makes a request with url to geocodefarm and interprets the meta data of the result
      * @param $url
      * @throws \DataInterface\Exception\IncompatibleInterfaceException
+     * @throws \DataInterface\Exception\InterfaceQuotaExceededException
      * @return array|null
      */
     private function doRequestAndInterpretJSON($url)
@@ -168,11 +157,14 @@ class Geocodefarm extends DataInterface
         }
 
         // Handle Status Info
+        // https://www.geocodefarm.com/dashboard/documentation/
         $statusInfo = $json['STATUS'];
 
-        if ($statusInfo['status'] == 'FAILED, ACCESS_DENIED') {
+        if ($statusInfo['status'] == 'FAILED, ACCESS_DENIED' || $statusInfo['status'] == 'API_KEY_INVALID' || $statusInfo['status'] == 'ACCOUNT_NOT_ACTIVE') {
             throw new IncompatibleInterfaceException('Access Denied to service reason: ' . $statusInfo['access'] . ' for request to ' . $url);
-        } else if ($statusInfo['status'] == 'FAILED, NO_RESULTS') {
+        } elseif ($statusInfo['status'] == 'BILL_PAST_DUE' || $statusInfo['status'] == 'OVER_QUERY_LIMIT') {
+            throw new InterfaceQuotaExceededException('Access Denied to service reason: ' . $statusInfo['access'] . ' for request to ' . $url);
+        } elseif ($statusInfo['status'] == 'FAILED, NO_RESULTS') {
             return null;
         }
 
@@ -188,7 +180,7 @@ class Geocodefarm extends DataInterface
 
         $geoLocation = null;
 
-        if(is_numeric($coordinateInfo['latitude']) && is_numeric($coordinateInfo['longitude'])){
+        if (is_numeric($coordinateInfo['latitude']) && is_numeric($coordinateInfo['longitude'])) {
             $geoLocation = new GeoLocation($coordinateInfo['latitude'], $coordinateInfo['longitude']);
         }
 
@@ -199,11 +191,10 @@ class Geocodefarm extends DataInterface
         $address = new Address();
 
 
-        if(strlen($addressInfo['address_returned']) > 0){
+        if (strlen($addressInfo['address_returned']) > 0) {
             $address->setAddressString($addressInfo['address_returned']);
             $address->parseString();
-        }
-        elseif(strlen($addressInfo['address']) > 0){
+        } elseif (strlen($addressInfo['address']) > 0) {
             $address->setAddressString($addressInfo['address']);
             $address->parseString();
         }
@@ -215,8 +206,8 @@ class Geocodefarm extends DataInterface
 //        $returnData['Meta']['raw'] = $json;
 
         // Statistics
-        $statisticsInfo = isset($json['STATISTICS'])?$json['STATISTICS']:array();
-        $returnData['Meta']['loadTime'] = isset($statisticsInfo['load_time'])?$statisticsInfo['load_time']:null;
+        $statisticsInfo = isset($json['STATISTICS']) ? $json['STATISTICS'] : array();
+        $returnData['Meta']['loadTime'] = isset($statisticsInfo['load_time']) ? $statisticsInfo['load_time'] : null;
 
 
         return $returnData;
@@ -266,10 +257,11 @@ class Geocodefarm extends DataInterface
         return $json;
     }
 
-    private function translateAccuracy($accuracyString){
+    private function translateAccuracy($accuracyString)
+    {
         $accuracy = 0.0;
 
-        switch($accuracyString){
+        switch ($accuracyString) {
             // This is the highest level of accuracy and usually indicates a spot-on match.
             case 'VERY ACCURATE':
                 $accuracy = 1.0;
@@ -289,9 +281,23 @@ class Geocodefarm extends DataInterface
 
         }
 
-       return $accuracy;
+        return $accuracy;
 
     }
 
 
+    protected static function setRemainingQueries($number)
+    {
+        // TODO: Implement setRemainingQueries() method.
+    }
+
+    protected static function setUsedQueries($number)
+    {
+        // TODO: Implement setUsedQueries() method.
+    }
+
+    protected static function incrementUsedQueries($number)
+    {
+        // TODO: Implement incrementUsedQueries() method.
+    }
 }

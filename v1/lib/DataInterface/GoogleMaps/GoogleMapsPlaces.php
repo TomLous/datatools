@@ -11,6 +11,7 @@
 namespace DataInterface\GoogleMaps;
 
 
+use DataInterface\Exception\InterfaceQuotaExceededException;
 use DataInterface\GoogleMaps\GoogleMapsPlaceTypes;
 use DataInterface\DataInterface;
 use DataInterface\Exception\IncompatibleInterfaceException;
@@ -33,6 +34,18 @@ class GoogleMapsPlaces extends DataInterface
     protected $textsearchUnit = null;
     protected $radarsearchUnit = null;
 
+
+    /**
+     * @var int remainingQueries
+     * @todo do something with this info
+     */
+    protected static $remainingQueries = null;
+
+    /**
+     * @var int usedQueries
+     * @todo do something with this info
+     */
+    protected static $usedQueries = 0;
 
     /**
      * Constanst used for this API
@@ -62,7 +75,6 @@ class GoogleMapsPlaces extends DataInterface
         $pagetoken = null;
 
 
-
         $inputGeoLocation = null;
         $queryParameters = array();
 
@@ -84,11 +96,11 @@ class GoogleMapsPlaces extends DataInterface
         }
 
 
-        if (isset($params['radius']) && is_scalar($params['radius']) && $params['radius']>0) {
+        if (isset($params['radius']) && is_scalar($params['radius']) && $params['radius'] > 0) {
             $radius = intval($params['radius']);
         }
 
-        if (isset($params['rankby']) && is_scalar($params['rankby']) && ($params['rankby']=='distance' || $params['rankby']=='prominence')) {
+        if (isset($params['rankby']) && is_scalar($params['rankby']) && ($params['rankby'] == 'distance' || $params['rankby'] == 'prominence')) {
             $rankby = $params['rankby'];
         }
 
@@ -106,19 +118,19 @@ class GoogleMapsPlaces extends DataInterface
         }
 
         if (isset($params['opennow']) && is_scalar($params['opennow'])) {
-            $opennow = strtolower($params['opennow'])=='true' || $params['opennow']?'true':'false';
+            $opennow = strtolower($params['opennow']) == 'true' || $params['opennow'] ? 'true' : 'false';
         }
 
         if (isset($params['pagetoken']) && is_scalar($params['pagetoken'])) {
             $pagetoken = $params['pagetoken'];
         }
 
-        if(isset($params['types'])){
+        if (isset($params['types'])) {
             $types = $params['types'];
-        }elseif(isset($params['typesCategory'])){
-            $methodName = 'get'.$params['typesCategory'].'Types';//
-            if(method_exists(__NAMESPACE__.'\GoogleMapsPlaceTypes', $methodName)){
-                $types = call_user_func(array(__NAMESPACE__ .'\GoogleMapsPlaceTypes', $methodName));
+        } elseif (isset($params['typesCategory'])) {
+            $methodName = 'get' . $params['typesCategory'] . 'Types'; //
+            if (method_exists(__NAMESPACE__ . '\GoogleMapsPlaceTypes', $methodName)) {
+                $types = call_user_func(array(__NAMESPACE__ . '\GoogleMapsPlaceTypes', $methodName));
             }
         }
 
@@ -153,9 +165,9 @@ class GoogleMapsPlaces extends DataInterface
 
 
         if ($types !== null) {
-            if(is_array($types)){
+            if (is_array($types)) {
                 $queryParameters['types'] = implode('|', $types);
-            }else{
+            } else {
                 $queryParameters['types'] = $types;
             }
         }
@@ -168,6 +180,9 @@ class GoogleMapsPlaces extends DataInterface
         // create a new URL for this request e.g. https://maps.googleapis.com/maps/api/place/[endpoint]/[type]/?
         $requestUrl = $this->buildUrl('nearbysearch', $queryParameters);
 
+
+//        self::$ = (int)$accountInfo['remaining_queries'];
+        self::$usedQueries = (int)$accountInfo['used_today'];
         return $this->doRequestAndInterpretJSON($requestUrl);
     }
 
@@ -180,21 +195,49 @@ class GoogleMapsPlaces extends DataInterface
         // Retrieve JSON for url
         $json = $this->doJSONGetRequest($url);
 
+        $errorMessage = isset($json['error_message']) ? $json['error_message'] : null;
 
-        if(isset($json['next_page_token'])){
+        if (!array_key_exists('status', $json)) {
+            throw new IncompatibleInterfaceException('Missing data in result from request to ' . $url. ' message: ' . $errorMessage);
+        }
+
+        // Handle status
+        // https://developers.google.com/places/documentation/search#PlaceSearchStatusCodes
+        if ($json['status'] == 'OVER_QUERY_LIMIT') {
+            throw new InterfaceQuotaExceededException('Access Denied to service reason: ' . $json['status'] . ' for request to ' . $url . ' message: ' . $errorMessage);
+        } elseif ($json['status'] == 'REQUEST_DENIED') {
+            throw new IncompatibleInterfaceException('Access Denied to service reason: ' . $json['status'] . ' for request to ' . $url . ' message: ' . $errorMessage);
+        } elseif ($json['status'] == 'INVALID_REQUEST') {
+            throw new IncompatibleInputException('Failed request to service reason: ' . $json['status'] . ' for request to ' . str_replace($this->apiKey, '[key]', $url) . ' message: ' . $errorMessage);
+        } elseif ($json['status'] == 'ZERO_RESULTS') {
+            return null;
+        }
+
+
+        if (isset($json['next_page_token'])) {
             $returnData['Meta']['next_page_token'] = $json['next_page_token'];
         }
 
 
+//        if(isset($json['next_page_token'])){
+
+        /**
+         *
+         * status
+         * OK indicates that no errors occurred; the place was successfully detected and at least one result was returned.
+         * ZERO_RESULTS indicates that the search was successful but returned no results. This may occur if the search was passed a latlng in a remote location.
+         * OVER_QUERY_LIMIT indicates that you are over your quota.
+         * REQUEST_DENIED indicates that your request was denied, generally because of lack of a sensor parameter.
+         * INVALID_REQUEST
+         *
+         *
+         */
 
 
-
-        $returnData['data'] =  $json['results'];
+        $returnData['data'] = $json['results'];
 
         return $returnData;
     }
-
-
 
 
     private function buildUrl($endpoint, $queryParameters = array())
