@@ -10,6 +10,7 @@ namespace DataInterface;
 
 use DataInterface\Exception\IncompatibleInputException;
 use DataInterface\Exception\IncompatibleInterfaceException;
+use DataInterface\Exception\InterfaceQuotaExceededException;
 use Slim\Slim;
 
 /**
@@ -39,12 +40,27 @@ abstract class DataInterface
      */
     protected static $usedQueries = 0;
 
+    /**
+     * @var int quotaResetTimestamp
+     * @todo do something with this info
+     */
+    protected static $quotaResetTimestamp = null;
+
+    /**
+     * @var bool meta variable to set bound state for class
+     */
+    protected static $_bound = false;
+
 
     /**
      * General construct method, init all extended classes with base
      */
     function __construct()
     {
+        // sets statics
+        $this->_setLateStaticBinding();
+
+
         // reference to slim framework
         $this->slim = Slim::getInstance();
 
@@ -75,6 +91,9 @@ abstract class DataInterface
                 }
             }
         }
+
+        // call query quota settings
+       // $this->checkResetQueryQuota();
 
     }
 
@@ -148,7 +167,81 @@ abstract class DataInterface
         return $route;
     }
 
-//    protected abstract static function setRemainingQueries($number);
-//    protected abstract static function setUsedQueries($number);
-//    protected abstract static function incrementUsedQueries($number);
+    /**
+     * Breaks static references for inheretid classes and makes late static binding work as expected
+     * @see: http://stackoverflow.com/questions/5513484/php-static-variables-in-an-abstract-parent-class-question-is-in-the-sample-code
+     */
+    private function _setLateStaticBinding(){
+        if(!static::$_bound){
+            // Workaround
+            $tmp = 'x';
+            static::$_bound = &$tmp;
+            static::$_bound = true;
+
+            static::$remainingQueries = &$tmp;
+            static::$remainingQueries = null;
+
+            static::$usedQueries = &$tmp;
+            static::$usedQueries = 0;
+        }
+    }
+
+    /**
+     * Initializes remaining queries when null or forced
+     * @param $number
+     * @param bool $forceIfNotNull
+     */
+    protected static function setRemainingQueries($number, $forceIfNotNull=false){
+        if(static::$remainingQueries === null || $forceIfNotNull){
+            static::$remainingQueries = $number;
+        }
+    }
+
+    /**
+     * Initializes used queries when 0 or forced
+     * @param $number
+     * @param bool $forceIfNotZero
+     */
+    protected static function setUsedQueries($number, $forceIfNotZero=false){
+        if(static::$usedQueries == 0 || $forceIfNotZero){
+            static::$usedQueries = $number;
+        }
+    }
+
+    /**
+     * Initializes the timestamp when the quota resets
+     * @param $timestamp
+     * @param bool $forceIfNotNull
+     */
+    protected static function setQuotaResetTimestamp($timestamp, $forceIfNotNull=false){
+        if(static::$quotaResetTimestamp === null || $forceIfNotNull){
+            static::$quotaResetTimestamp = $timestamp;
+        }
+    }
+
+
+    /**
+     * Increments the used queries (default 1) and checks wether the quota will be exceeded, or needs to be reset.
+     * @param int $increment
+     * @throws Exception\InterfaceQuotaExceededException
+     * @internal param $number
+     * @internal param bool $forceIfNotZero
+     */
+    protected static function incrementUsedQueries($increment=1){
+//        static::checkResetQueryQuota();
+        static::$usedQueries += $increment;
+        if(static::$remainingQueries !== null){
+            $newRemainder = static::$remainingQueries - $increment;
+            if($newRemainder < 0){
+                throw new InterfaceQuotaExceededException('Quota (probably) exceeded for DataInterface : '. get_called_class() . ' used queries: '.static::$usedQueries);
+            }
+
+        }
+    }
+
+    /**
+     * Checks and optionally resets the quota variables.
+     * Abstract only, since every interface will define it based on own config
+     */
+//    protected abstract function checkResetQueryQuota();
 }

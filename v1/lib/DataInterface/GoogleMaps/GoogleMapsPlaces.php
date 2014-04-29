@@ -36,25 +36,19 @@ class GoogleMapsPlaces extends DataInterface
 
 
     /**
-     * @var int remainingQueries
-     * @todo do something with this info
-     */
-    protected static $remainingQueries = null;
-
-    /**
-     * @var int usedQueries
-     * @todo do something with this info
-     */
-    protected static $usedQueries = 0;
-
-    /**
      * Constanst used for this API
      */
     const apiUrl = 'https://maps.googleapis.com/maps/api/place/';
     const returnType = 'json';
     const sensor = 'false'; //  Indicates whether or not the Place request came from a device using a location sensor (e.g. a GPS) to determine the location sent in this request.
 
-
+    /**
+     * Performs nearby search Query on Google Maps places API
+     * @see: https://developers.google.com/places/documentation/search#PlaceSearchRequests
+     * @param array $params
+     * @return array|null
+     * @throws \DataInterface\Exception\IncompatibleInputException
+     */
     function nearbySearch($params = array())
     {
         // sanitize input params
@@ -73,6 +67,8 @@ class GoogleMapsPlaces extends DataInterface
         $opennow = null;
         $types = null;
         $pagetoken = null;
+        $key = $this->apiKey;
+        $sensor = self::sensor;
 
 
         $inputGeoLocation = null;
@@ -109,6 +105,10 @@ class GoogleMapsPlaces extends DataInterface
             $language = $params['language'];
         }
 
+        if (isset($params['key']) && is_scalar($params['key'])) {
+            $key = $params['key'];
+        }
+
         if (isset($params['name']) && is_scalar($params['name'])) {
             $name = $params['name'];
         }
@@ -120,6 +120,11 @@ class GoogleMapsPlaces extends DataInterface
         if (isset($params['opennow']) && is_scalar($params['opennow'])) {
             $opennow = strtolower($params['opennow']) == 'true' || $params['opennow'] ? 'true' : 'false';
         }
+
+        if (isset($params['sensor']) && is_scalar($params['sensor'])) {
+            $sensor = strtolower($params['sensor']) == 'true' || $params['sensor'] ? 'true' : 'false';
+        }
+
 
         if (isset($params['pagetoken']) && is_scalar($params['pagetoken'])) {
             $pagetoken = $params['pagetoken'];
@@ -172,6 +177,9 @@ class GoogleMapsPlaces extends DataInterface
             }
         }
 
+        $queryParameters['key'] = $key;
+        $queryParameters['sensor'] = $sensor;
+
         if ($pagetoken !== null) {
             $queryParameters['pagetoken'] = $pagetoken;
         }
@@ -180,11 +188,22 @@ class GoogleMapsPlaces extends DataInterface
         // create a new URL for this request e.g. https://maps.googleapis.com/maps/api/place/[endpoint]/[type]/?
         $requestUrl = $this->buildUrl('nearbysearch', $queryParameters);
 
+        // increment used quota
+        $this->incrementUsedQueries($this->nearbysearchUnit);
 
-//        self::$ = (int)$accountInfo['remaining_queries'];
-        self::$usedQueries = (int)$accountInfo['used_today'];
-        return $this->doRequestAndInterpretJSON($requestUrl);
+        // json returned
+        $returnData =  $this->doRequestAndInterpretJSON($requestUrl);
+
+        $returnData['GeoLocationProvided'] = $inputGeoLocation;
+
+        return $returnData;
     }
+
+
+
+
+
+
 
 
     private function doRequestAndInterpretJSON($url)
@@ -213,37 +232,46 @@ class GoogleMapsPlaces extends DataInterface
             return null;
         }
 
-
+        // set next page tokeb
         if (isset($json['next_page_token'])) {
-            $returnData['Meta']['next_page_token'] = $json['next_page_token'];
+            $returnData['Meta']['next_pagetoken'] = $json['next_page_token'];
+        }
+
+        $returnData['data'] = array();
+        foreach($json['results'] as $result){
+            $dataRecord = array();
+            $dataRecord['GeoLocation'] = new GeoLocation($result['geometry']['location']['lat'], $result['geometry']['location']['lng']);
+            $dataRecord['googleMapsId'] = $result['id'];
+            $dataRecord['googleMapsReference'] = $result['reference'];
+            $dataRecord['name'] = $result['name'];
+            $dataRecord['googleMapsTypes'] = $result['types'];
+            $address = new Address();
+            $address->setAddressString($result['vicinity']);
+            $address->parseString();
+            $dataRecord['Address'] = $address;
+//            $dataRecord['_raw'] = $result;
+
+
+            $returnData['data'][$result['id']] = $dataRecord;
         }
 
 
-//        if(isset($json['next_page_token'])){
-
-        /**
-         *
-         * status
-         * OK indicates that no errors occurred; the place was successfully detected and at least one result was returned.
-         * ZERO_RESULTS indicates that the search was successful but returned no results. This may occur if the search was passed a latlng in a remote location.
-         * OVER_QUERY_LIMIT indicates that you are over your quota.
-         * REQUEST_DENIED indicates that your request was denied, generally because of lack of a sensor parameter.
-         * INVALID_REQUEST
-         *
-         *
-         */
 
 
-        $returnData['data'] = $json['results'];
+//        $returnData['data'] = $json['results'];
 
         return $returnData;
     }
 
 
+    /**
+     * Creates a Google Maps places api call
+     * @param $endpoint
+     * @param array $queryParameters
+     * @return string
+     */
     private function buildUrl($endpoint, $queryParameters = array())
     {
-        $queryParameters['sensor'] = self::sensor;
-        $queryParameters['key'] = $this->apiKey;
         $queryString = http_build_query($queryParameters);
         $url = self::apiUrl . $endpoint . '/' . self::returnType . '?' . $queryString;
         return $url;

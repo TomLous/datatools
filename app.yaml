@@ -13,6 +13,10 @@ handlers:
 - url: /env
   script: env.php
 
+# env info
+- url: /test
+  script: test.php
+
 # api root
 - url: /v1/.*
   script: v1/index.php

@@ -172,8 +172,8 @@ class Geocodefarm extends DataInterface
         // Set Account Info
         $accountInfo = $json['ACCOUNT'];
 
-        self::$remainingQueries = (int)$accountInfo['remaining_queries'];
-        self::$usedQueries = (int)$accountInfo['used_today'];
+        static::setRemainingQueries((int)$accountInfo['remaining_queries'], true);
+        static::setUsedQueries((int)$accountInfo['used_today'], true);
 
         // Lat / Long
         $coordinateInfo = $json['COORDINATES'];
@@ -285,19 +285,19 @@ class Geocodefarm extends DataInterface
 
     }
 
+    protected function initQueryQuota(){
+        static::setRemainingQueries($this->limit);
+        static::setUsedQueries(0);
 
-    protected static function setRemainingQueries($number)
-    {
-        // TODO: Implement setRemainingQueries() method.
+        $nextReset = strtotime(date('Y-m-d '). $this->limitResetTime);
+        $nowTimestamp = time();
+
+        if($nextReset < $nowTimestamp){
+            $nextReset += (24*60*60);
+        }
+        static::setQuotaResetTimestamp($nextReset, true);
     }
 
-    protected static function setUsedQueries($number)
-    {
-        // TODO: Implement setUsedQueries() method.
-    }
 
-    protected static function incrementUsedQueries($number)
-    {
-        // TODO: Implement incrementUsedQueries() method.
-    }
+
 }

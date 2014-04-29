@@ -10,6 +10,7 @@ return array(
     'DataInterface\\DataInterface' => $baseDir . '/v1/lib/DataInterface/DataInterface.php',
     'DataInterface\\Exception\\IncompatibleInputException' => $baseDir . '/v1/lib/DataInterface/Exception/IncompatibleInputException.php',
     'DataInterface\\Exception\\IncompatibleInterfaceException' => $baseDir . '/v1/lib/DataInterface/Exception/IncompatibleInterfaceException.php',
+    'DataInterface\\Exception\\InterfaceQuotaExceededException' => $baseDir . '/v1/lib/DataInterface/Exception/InterfaceQuotaExceededException.php',
     'DataInterface\\Geocodefarm\\Geocodefarm' => $baseDir . '/v1/lib/DataInterface/Geocodefarm/Geocodefarm.php',
     'DataInterface\\GoogleMaps\\GoogleMapsPlaceTypes' => $baseDir . '/v1/lib/DataInterface/GoogleMaps/GoogleMapsPlaceTypes.php',
     'DataInterface\\GoogleMaps\\GoogleMapsPlaces' => $baseDir . '/v1/lib/DataInterface/GoogleMaps/GoogleMapsPlaces.php',
