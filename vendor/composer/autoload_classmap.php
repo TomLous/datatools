@@ -12,6 +12,7 @@ return array(
     'DataInterface\\Exception\\IncompatibleInterfaceException' => $baseDir . '/v1/lib/DataInterface/Exception/IncompatibleInterfaceException.php',
     'DataInterface\\Exception\\InterfaceQuotaExceededException' => $baseDir . '/v1/lib/DataInterface/Exception/InterfaceQuotaExceededException.php',
     'DataInterface\\Geocodefarm\\Geocodefarm' => $baseDir . '/v1/lib/DataInterface/Geocodefarm/Geocodefarm.php',
+    'DataInterface\\GoogleMaps\\GoogleMapsPlace' => $baseDir . '/v1/lib/DataInterface/GoogleMaps/GoogleMapsPlace.php',
     'DataInterface\\GoogleMaps\\GoogleMapsPlaceTypes' => $baseDir . '/v1/lib/DataInterface/GoogleMaps/GoogleMapsPlaceTypes.php',
     'DataInterface\\GoogleMaps\\GoogleMapsPlaces' => $baseDir . '/v1/lib/DataInterface/GoogleMaps/GoogleMapsPlaces.php',
     'Slim\\SysLogWriter' => $baseDir . '/v1/lib/Slim/SysLogwriter.php',

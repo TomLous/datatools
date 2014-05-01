@@ -44,7 +44,7 @@ class Geocodefarm extends DataInterface
     const returnType = 'json';
 
     /**
-     * Request geoloaction for address string, passed as addressString or address (\Address) property in array
+     * Request geoloaction for address string, passed as addressString or address (\Address) property in array, optional key param
      * @param array $params
      * @throws \DataInterface\Exception\IncompatibleInputException
      * @return array|null
@@ -59,6 +59,7 @@ class Geocodefarm extends DataInterface
         // define params
         $addressString = null;
         $inputAddress = null;
+        $customKey = null;
 
         if (isset($params['addressString']) && is_scalar($params['addressString'])) {
             $addressString = $params['addressString'];
@@ -72,8 +73,13 @@ class Geocodefarm extends DataInterface
             throw new IncompatibleInputException('Missing addressString or address property');
         }
 
+        if (isset($params['key']) && is_scalar($params['key'])) {
+            $customKey = $params['key'];
+        }
+
+
         // create a new URL for this request e.g. https://www.geocodefarm.com/api/forward/json/[key]/address
-        $requestUrl = $this->buildUrl('forward', array($addressString));
+        $requestUrl = $this->buildUrl('forward', array($addressString),$customKey);
 
         // do request to Geocodefarms
         $returnData = $this->doRequestAndInterpretJSON($requestUrl);
@@ -84,7 +90,7 @@ class Geocodefarm extends DataInterface
     }
 
     /**
-     * Request address for latitude, longitude variable, passed as doubles (latitude, longitude) or geoLocation (\GeoLocation) property in array
+     * Request address for latitude, longitude variable, passed as doubles (latitude, longitude) or geoLocation (\GeoLocation) property in array, optional key param
      * @param array $params
      * @throws \DataInterface\Exception\IncompatibleInputException
      * @return array|null
@@ -100,6 +106,7 @@ class Geocodefarm extends DataInterface
         $latitude = 0;
         $longitude = 0;
         $inputGeoLocation = null;
+        $customKey = null;
 
         if (isset($params['latitude']) && is_scalar($params['latitude']) && isset($params['longitude']) && is_scalar($params['longitude'])) {
             $latitude = $params['latitude'];
@@ -114,8 +121,12 @@ class Geocodefarm extends DataInterface
             throw new IncompatibleInputException('Missing latitude & longitude or geoLocation property');
         }
 
+        if (isset($params['key']) && is_scalar($params['key'])) {
+            $customKey = $params['key'];
+        }
+
         // create a new URL for this request e.g. https://www.geocodefarm.com/api/reverse/json/[key]/latitude/longitude
-        $requestUrl = $this->buildUrl('reverse', array($latitude, $longitude));
+        $requestUrl = $this->buildUrl('reverse', array($latitude, $longitude), $customKey);
 
         // do request to Geocodefarms
         $returnData = $this->doRequestAndInterpretJSON($requestUrl);
@@ -217,12 +228,14 @@ class Geocodefarm extends DataInterface
      * Builds a geocodefarm url based on static, local and user params
      * @param $endpoint
      * @param array $properties
+     * @param null $key
      * @return string
      */
-    private function buildUrl($endpoint, $properties = array())
+    private function buildUrl($endpoint, $properties = array(), $key=null)
     {
+        $key = $key===null?$this->apiKey:$key;
         $parameters = implode('/', array_map('rawurlencode', $properties));
-        $url = self::apiUrl . $endpoint . '/' . self::returnType . '/' . $this->apiKey . '/' . $parameters;
+        $url = self::apiUrl . $endpoint . '/' . self::returnType . '/' . $key . '/' . $parameters;
         return $url;
     }
 
