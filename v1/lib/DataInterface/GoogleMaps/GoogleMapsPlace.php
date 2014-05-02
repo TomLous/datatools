@@ -22,6 +22,11 @@ class GoogleMapsPlace implements \JsonSerializable {
     private $rating;
     private $types;
 
+    private $phoneNumber; //international_phone_number or formatted_phone_number
+    private $website; // website or else url
+    private $ratingLastTimestamp;
+
+
     /**
      * @param Address $address
      */
@@ -135,6 +140,54 @@ class GoogleMapsPlace implements \JsonSerializable {
         return $this->types;
     }
 
+    /**
+     * @param mixed $phoneNumber
+     */
+    public function setPhoneNumber($phoneNumber)
+    {
+        $this->phoneNumber = $phoneNumber;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getPhoneNumber()
+    {
+        return $this->phoneNumber;
+    }
+
+    /**
+     * @param mixed $ratingLastTimestamp
+     */
+    public function setRatingLastTimestamp($ratingLastTimestamp)
+    {
+        $this->ratingLastTimestamp = $ratingLastTimestamp;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getRatingLastTimestamp()
+    {
+        return $this->ratingLastTimestamp;
+    }
+
+    /**
+     * @param mixed $website
+     */
+    public function setWebsite($website)
+    {
+        $this->website = $website;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getWebsite()
+    {
+        return $this->website;
+    }
+
 
     /**
      * (PHP 5 &gt;= 5.4.0)<br/>
@@ -153,6 +206,9 @@ class GoogleMapsPlace implements \JsonSerializable {
         $obj->address = $this->getAddress();
         $obj->rating = $this->getRating();
         $obj->types = $this->getTypes();
+        $obj->phoneNumber = $this->getPhoneNumber(); //international_phone_number or formatted_phone_number
+        $obj->website = $this->getWebsite(); // website or else url
+        $obj->ratingLastTimestamp = $this->getRatingLastTimestamp();
         return $obj;
     }
 }

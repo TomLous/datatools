@@ -44,7 +44,8 @@ $dataInterface = array(
             'limit'  => $GOOGLE_MAPS_PLACES_LIMIT, // max. request units per 24h (1000, but 100000 after registering)
             'nearbysearchUnit' => $GOOGLE_MAPS_PLACES_NEARBYSEARCH_UNIT, // request unit for nearby search (1)
             'textsearchUnit' => $GOOGLE_MAPS_PLACES_TEXTSEARCH_UNIT,  // request unit for text search (10)
-            'radarsearchUnit' =>  $GOOGLE_MAPS_PLACES_RADARSEARCH_UNIT // request unit for radar search (5)
+            'radarsearchUnit' =>  $GOOGLE_MAPS_PLACES_RADARSEARCH_UNIT, // request unit for radar search (5)
+            'detailhUnit' =>  $GOOGLE_MAPS_PLACES_DETAIL_UNIT // request unit for detail search (1)
         ),
     )
 );

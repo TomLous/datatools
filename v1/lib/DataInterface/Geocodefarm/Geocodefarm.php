@@ -283,7 +283,7 @@ class Geocodefarm extends DataInterface
             case 'GOOD ACCURACY':
                 $accuracy = 0.7;
                 break;
-            //  This is the third level of accuracy and usually indicates a geographical area match, such as the metro area, town, or city.
+            //  This is the third level of accuracy and usually indicates a geographical area match, such as the metro area, locality, or city.
             case 'ACCURATE':
                 $accuracy = 0.3;
                 break;

@@ -70,17 +70,17 @@ class Address implements \JsonSerializable {
     private $addressTypeIdentifier;
 
     /**
-     * Prefix local part before town. For instance, if your hamlet/village appears in the address before the town
+     * Prefix local part before locality. For instance, if your hamlet/village/area appears in the address before the locality
      * @var string
      */
-    private $localMunicipality;
+    private $subLocality;
 
 
     /**
      * Actual town/city name
      * @var string
      */
-    private $town;
+    private $locality;
 
     /**
      * NUTS 3 level info, like: County, Arrondissements, Kreis, Departments, etc
@@ -278,26 +278,26 @@ class Address implements \JsonSerializable {
     }
 
     /**
-     * Prefix local part before town. For instance, if your hamlet/village appears in the address before the town
-     * @param string $localMunicipality
+     * Prefix local part before locality. For instance, if your hamlet/village appears in the address before the locality
+     * @param string $subLocality
      * @throws \Exception
      */
-    public function setLocalMunicipality($localMunicipality)
+    public function setSubLocality($subLocality)
     {
-        if(!is_scalar($localMunicipality) && $localMunicipality!==null){
-            throw new \Exception('Invalid value for localMunicipality: '.$localMunicipality);
+        if(!is_scalar($subLocality) && $subLocality!==null){
+            throw new \Exception('Invalid value for subLocality: '.$subLocality);
         }
 
-        $this->localMunicipality = $localMunicipality;
+        $this->subLocality = $subLocality;
     }
 
     /**
-     * Prefix local part before town. For instance, if your hamlet/village appears in the address before the town
+     * Prefix local part before locality. For instance, if your hamlet/village appears in the address before the locality
      * @return string
      */
-    public function getLocalMunicipality()
+    public function getSubLocality()
     {
-        return $this->localMunicipality;
+        return $this->subLocality;
     }
 
     /**
@@ -442,25 +442,25 @@ class Address implements \JsonSerializable {
 
     /**
      * Actual town/city name
-     * @param string $town
+     * @param string $locality
      * @throws \Exception
      */
-    public function setTown($town)
+    public function setLocality($locality)
     {
-        if(!is_scalar($town) && $town!==null){
-            throw new \Exception('Invalid value for town: '.$town);
+        if(!is_scalar($locality) && $locality!==null){
+            throw new \Exception('Invalid value for locality: '.$locality);
         }
 
-        $this->town = $town;
+        $this->locality = $locality;
     }
 
     /**
-     * Actual town/city name
+     * Actual locality/city name
      * @return string
      */
-    public function getTown()
+    public function getLocality()
     {
-        return $this->town;
+        return $this->locality;
     }
 
 
@@ -508,8 +508,8 @@ class Address implements \JsonSerializable {
         $parts[] = $this->getPostalArea();
 
         // city, state, etc
-        $parts[] = $this->getTown();
-        $parts[] = $this->getLocalMunicipality();
+        $parts[] = $this->getLocality();
+        $parts[] = $this->getSubLocality();
         $parts[] = $this->getGoverningDistrictLevel1();
         $parts[] = $this->getGoverningDistrictLevel2();
         $parts[] = $this->getCountry();
@@ -549,8 +549,8 @@ class Address implements \JsonSerializable {
         $obj->streetDirection = $this->getStreetDirection();
         $obj->addressType = $this->getAddressType();
         $obj->addressTypeIdentifier = $this->getAddressTypeIdentifier();
-        $obj->localMunicipality = $this->getLocalMunicipality();
-        $obj->town = $this->getTown();
+        $obj->subLocality = $this->getSubLocality();
+        $obj->locality = $this->getLocality();
         $obj->governingDistrictLevel1 = $this->getGoverningDistrictLevel1();
         $obj->governingDistrictLevel2 = $this->getGoverningDistrictLevel2();
         $obj->postalArea = $this->getPostalArea();

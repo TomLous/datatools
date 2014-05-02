@@ -47,6 +47,11 @@ class GoogleMapsPlaces extends DataInterface
      */
     protected $radarsearchUnit = null;
 
+    /**
+     * @var null request unit for detail search (1)
+     */
+    protected $detailUnit = null;
+
 
     /**
      * Constanst used for this API
@@ -546,6 +551,91 @@ class GoogleMapsPlaces extends DataInterface
         return $returnData;
     }
 
+    /**
+     * Performs detail search Query on Google Maps places API to a place by reference
+     * @see: https://developers.google.com/places/documentation/details#PlaceDetailsRequests
+     * Required params:
+     * string reference
+     * optional:
+     * string language
+     * string key
+     * boolean sensor
+     *
+     * @param array $params
+     * @return array|null
+     * @throws \DataInterface\Exception\IncompatibleInputException
+     */
+    public function detail($params = array())
+    {
+        // sanitize input params
+        if (!is_array($params)) {
+            throw new IncompatibleInputException('Missing properties');
+        }
+
+        // define params
+        $reference = 0;
+        $language = null;
+        $key = $this->apiKey;
+        $sensor = self::sensor;
+        $follow_pagetoken = false;
+
+
+        $queryParameters = array();
+
+        /**
+         * Check input params / defaults
+         */
+        if (isset($params['reference']) && is_scalar($params['reference'])) {
+            $reference = $params['reference'];
+        } else {
+            throw new IncompatibleInputException('Missing reference property');
+
+        }
+
+
+        //https://spreadsheets.google.com/pub?key=p9pdwsai2hDMsLkXsoM05KQ&gid=1
+        if (isset($params['language']) && is_scalar($params['language']) && strlen($params['language']) < 6) {
+            $language = $params['language'];
+        }
+
+        if (isset($params['key']) && is_scalar($params['key'])) {
+            $key = $params['key'];
+        }
+
+
+        if (isset($params['sensor']) && is_scalar($params['sensor'])) {
+            $sensor = strtolower($params['sensor']) == 'true' || $params['sensor'] == 1 ? 'true' : 'false';
+        }
+
+
+        /**
+         * create query params
+         */
+        $queryParameters['reference'] = $reference;
+
+
+        if ($language !== null) {
+            $queryParameters['language'] = $language;
+        }
+
+
+        $queryParameters['key'] = $key;
+        $queryParameters['sensor'] = $sensor;
+
+
+        // create a new URL for this request e.g. https://maps.googleapis.com/maps/api/place/[endpoint]/[type]/?
+        $requestUrl = $this->buildUrl('details', $queryParameters);
+
+        // increment used quota
+        $this->incrementUsedQueries($this->detailUnit);
+
+        // json returned
+        $returnData = $this->doRequestAndInterpretJSON($requestUrl);
+
+
+        return $returnData;
+    }
+
 
     /**
      * Makes a request with url to google maps API and interprets the meta data of the result
@@ -558,12 +648,13 @@ class GoogleMapsPlaces extends DataInterface
      * @throws \DataInterface\Exception\InterfaceQuotaExceededException
      * @return array|null
      */
-    private function doRequestAndInterpretJSON($url, $follow_pagetoken=false, $maxLoopCount=5)
+    private function doRequestAndInterpretJSON($url, $follow_pagetoken = false, $maxLoopCount = 5)
     {
         $returnData = array();
         $returnData['Meta'] = array();
 //        $returnData['Meta']['url'] = $url;
         $nextUrl = null;
+        $key = null;
 
         // Retrieve JSON for url
         $json = $this->doJSONGetRequest($url);
@@ -580,52 +671,45 @@ class GoogleMapsPlaces extends DataInterface
         // https://developers.google.com/places/documentation/search#PlaceSearchStatusCodes
         if ($json['status'] == 'OVER_QUERY_LIMIT') {
             throw new InterfaceQuotaExceededException('Access Denied to service reason: ' . $json['status'] . ' for request to ' . $url . ' message: ' . $errorMessage);
-        } elseif ($json['status'] == 'REQUEST_DENIED') {
+        } elseif ($json['status'] == 'REQUEST_DENIED' && $json['status'] == 'UNKNOWN_ERROR') {
             throw new IncompatibleInterfaceException('Access Denied to service reason: ' . $json['status'] . ' for request to ' . $url . ' message: ' . $errorMessage);
         } elseif ($json['status'] == 'INVALID_REQUEST') {
             throw new IncompatibleInputException('Failed request to service reason: ' . $json['status'] . ' for request to ' . str_replace($this->apiKey, '[key]', $url) . ' message: ' . $errorMessage);
-        } elseif ($json['status'] == 'ZERO_RESULTS') {
+        } elseif ($json['status'] == 'ZERO_RESULTS' || $json['status'] == 'NOT_FOUND') {
             return null;
         }
 
         // set next page tokeb
         if (isset($json['next_page_token'])) {
-            if($follow_pagetoken){
-                $nextUrl = preg_replace('/([?&])pagetoken=[^&]+(&|^)/is', '$1$2', $url).'&pagetoken='.$json['next_page_token'];
+            if ($follow_pagetoken) {
+                $nextUrl = preg_replace('/([?&])pagetoken=[^&]+(&|^)/is', '$1$2', $url) . '&pagetoken=' . $json['next_page_token'];
 //                $nextUrl = $url.='&pagetoken='.$json['next_page_token'];
 //                $returnData['Meta']['nexturl'] = $nextUrl;
-            }else{
+            } else {
                 $returnData['Meta']['next_pagetoken'] = $json['next_page_token'];
             }
 
         }
 
-        // loop results and reformat them to general api needs
-        $returnData['data'] = array();
-        foreach ($json['results'] as $result) {
-            $googleMapsPlace = new GoogleMapsPlace();
+        // Single result (from detail query)
+        if (isset($json['result']) && is_array($json['result']) && isset($json['result']['formatted_address'])) {
+            $key = 'GoogleMapsPlace_' . $json['result']['id'];
+            $returnData['data'][$key] = $this->parseResult($json['result']);
+//            $returnData['data'][$key. '_raw'] = $json['result'];
 
-            $googleMapsPlace->setGeoLocation(new GeoLocation($result['geometry']['location']['lat'], $result['geometry']['location']['lng']));
-            $googleMapsPlace->setId($result['id']);
-            $googleMapsPlace->setReference($result['reference']);
-            $googleMapsPlace->setName($result['name']);
-            $googleMapsPlace->setTypes($result['types']);
-            $googleMapsPlace->setRating($result['rating']);
-
-
-            if(isset($result['formatted_address']) || isset($result['vicinity'])){
-                $address = new Address();
-                $address->setAddressString(isset($result['formatted_address'])?$result['formatted_address']:$result['vicinity']);
-                $address->parseString();
-                $googleMapsPlace->setAddress($address);
+            // loop results and reformat them to general api needs
+        } elseif (isset($json['results']) && is_array($json['results'])) {
+            $returnData['data'] = array();
+            foreach ($json['results'] as $result) {
+                $key = 'GoogleMapsPlace_' . $result['id'];
+                $returnData['data'][$key] = $this->parseResult($result);
+//                $returnData['data'][$key. '_raw'] = $result;
             }
-
-
-            $returnData['data']['GoogleMapsPlace_'.$result['id']] = $googleMapsPlace;
         }
 
+
         //
-        if($nextUrl && $maxLoopCount > 0){
+        if ($nextUrl && $maxLoopCount > 0) {
             sleep(2); // to get google to generate the page token data
             $newData = $this->doRequestAndInterpretJSON($nextUrl, $follow_pagetoken, --$maxLoopCount);
             $returnData['data'] = array_merge($returnData['data'], $newData['data']);
@@ -635,6 +719,119 @@ class GoogleMapsPlaces extends DataInterface
         return $returnData;
     }
 
+
+    /**
+     * Parses a API result record object into a single  GoogleMapsPlace object
+     * @param $result
+     * @return GoogleMapsPlace
+     */
+    private function parseResult($result)
+    {
+        $googleMapsPlace = new GoogleMapsPlace();
+        $address = null;
+
+        // basic info
+        $googleMapsPlace->setId($result['id']);
+        $googleMapsPlace->setReference($result['reference']);
+        $googleMapsPlace->setName($result['name']);
+
+
+        // lat, long
+        $googleMapsPlace->setGeoLocation(new GeoLocation($result['geometry']['location']['lat'], $result['geometry']['location']['lng']));
+
+        // address
+        if (isset($result['formatted_address']) || isset($result['vicinity'])) {
+            if ($address === null) {
+                $address = new Address();
+            }
+            $address->setAddressString(isset($result['formatted_address']) ? $result['formatted_address'] : $result['vicinity']);
+            $address->parseString();
+        }
+
+        if (isset($result['address_components'])) {
+            if ($address === null) {
+                $address = new Address();
+            }
+
+            // @see https://developers.google.com/maps/documentation/geocoding/?hl=fr#Types
+            foreach ($result['address_components'] as $component) {
+                $value = $component['long_name'];
+                foreach ($component['types'] as $type) {
+                    switch ($type) {
+                        case 'street_number':
+                            $address->setStreetNumber(preg_replace('/\D+/is','', $value));
+                            $address->setStreetNumberSuffix(preg_replace('/\d+/is','', $value));
+                            break;
+                        case 'route':
+                            $address->setStreetName($value);
+                            break;
+                        case 'postal_code':
+                            $address->setPostalArea($value);
+                            break;
+                        case 'country':
+                            $address->setCountry($value);
+                            break;
+                        case 'administrative_area_level_1':
+                            $address->setGoverningDistrictLevel2($value);
+                            break;
+                        case 'administrative_area_level_2':
+                            $address->setGoverningDistrictLevel1($value);
+                            break;
+                        case 'locality':
+                            $address->setLocality($value);
+                            break;
+                        case 'sublocality':
+                            $address->setSubLocality($value);
+                            break;
+                        case 'premise':
+                            $address->setHouseOrBuildingName($value);
+                            break;
+                    }
+                }
+            }
+        }
+
+        $googleMapsPlace->setAddress($address);
+
+        // rating/review
+        if(isset($result['rating'])){
+            $googleMapsPlace->setRating($result['rating']);
+        }
+
+        if (isset($result['reviews'])) {
+            $totalScore = 0;
+            $lastRating = 0;
+            foreach($result['reviews'] as $review){
+                $totalScore += $review['rating'];
+                $lastRating = max($review['time'],$lastRating);
+            }
+            $googleMapsPlace->setRatingLastTimestamp($lastRating);
+
+            if(!isset($result['rating'])){
+                $googleMapsPlace->setRating($totalScore/count($result['reviews']));
+            }
+        }
+
+        // types
+        if(isset($result['types'])){
+            // @todo: reformat to googlemapsplacetypes?
+            $googleMapsPlace->setTypes($result['types']);
+        }
+
+        // website
+        if (isset($result['website']) || isset($result['url'])) {
+            $googleMapsPlace->setWebsite(isset($result['website'])?$result['website']:$result['url']);
+        }
+
+
+        // phone
+        if (isset($result['international_phone_number']) || isset($result['formatted_phone_number'])) {
+            $googleMapsPlace->setPhoneNumber(isset($result['international_phone_number'])?$result['international_phone_number']:$result['formatted_phone_number']);
+        }
+
+
+        return $googleMapsPlace;
+    }
 
     /**
      * Creates a Google Maps places api call
