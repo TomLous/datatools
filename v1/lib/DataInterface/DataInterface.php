@@ -134,29 +134,29 @@ abstract class DataInterface
                 $data['success'] = true;
 
                 if ($app->config('debug')) {
-                    $app->getLog()->debug($data);
+                    $app->getLog()->debug(var_export($data, true));
                 }
 
 
             } catch (IncompatibleInputException $e) { // User error (wrong entry)
                 $data['message'] = $e->getMessage();
                 $data['errorSource'] = 'User';
-                $app->getLog()->notice($data);
+                $app->getLog()->notice(var_export($data, true));
 
             } catch (IncompatibleInterfaceException $e) { // API error (connection failed)
                 $data['message'] = $e->getMessage();
                 $data['errorSource'] = 'API';
-                $app->getLog()->warn($data + array('trace' => $e->getTrace()));
+                $app->getLog()->warn(var_export($data + array('trace' => $e->getTrace()), true));
 
             } catch (\Exception $e) { // Catch all other exceptions
                 $data['message'] = $e->getMessage();
                 $data['errorSource'] = 'unknown';
-                $app->getLog()->warn($data + array('trace' => $e->getTrace()));
+                $app->getLog()->warn(var_export($data + array('trace' => $e->getTrace()), true));
 
             } catch (Exception $e) { // Catch all other exceptions
                 $data['message'] = $e->getMessage();
                 $data['errorSource'] = 'unknown';
-                $app->getLog()->warn($data + array('trace' => $e->getTrace()));
+                $app->getLog()->warn(var_export($data + array('trace' => $e->getTrace()), true));
             }
 
             // Always output JSON
