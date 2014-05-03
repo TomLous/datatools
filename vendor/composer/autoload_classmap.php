@@ -15,6 +15,7 @@ return array(
     'DataInterface\\GoogleMaps\\GoogleMapsPlace' => $baseDir . '/v1/lib/DataInterface/GoogleMaps/GoogleMapsPlace.php',
     'DataInterface\\GoogleMaps\\GoogleMapsPlaceTypes' => $baseDir . '/v1/lib/DataInterface/GoogleMaps/GoogleMapsPlaceTypes.php',
     'DataInterface\\GoogleMaps\\GoogleMapsPlaces' => $baseDir . '/v1/lib/DataInterface/GoogleMaps/GoogleMapsPlaces.php',
+    'DataInterface\\KBOPublicSearch\\KBOPublicSearchCrawler' => $baseDir . '/v1/lib/DataInterface/KBOPublicSearch/KBOPublicSearchCrawler.php',
     'Slim\\SysLogWriter' => $baseDir . '/v1/lib/Slim/SysLogwriter.php',
     'models\\Address' => $baseDir . '/v1/models/Address.php',
     'models\\GeoLocation' => $baseDir . '/v1/models/GeoLocation.php',
