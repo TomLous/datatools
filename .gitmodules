@@ -1,0 +1,6 @@
+[submodule "yii"]
+	path = yii
+	url = git@github.com:yiisoft/yii.git
+[submodule "framework"]
+	path = framework
+	url = git@github.com:yiisoft/yii.git
