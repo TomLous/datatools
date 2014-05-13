@@ -43,7 +43,7 @@ $app->get(
             <style>
                 html,body,div,span,object,iframe,
                 h1,h2,h3,h4,h5,h6,p,blockquote,pre,
-                abbr,address,cite,code,
+                abbr,addressNl,cite,code,
                 del,dfn,em,img,ins,kbd,q,samp,
                 small,strong,sub,sup,var,
                 b,i,

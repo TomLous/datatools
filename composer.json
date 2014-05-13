@@ -1,6 +1,19 @@
 {
+    "name": "datatools/datatools",
+    "type": "project",
+    "description": "Datatools API",
+    "keywords": ["api", "geo", "data", "location"],
+    "homepage": "https://github.com/TomLous/datatools",
+    "license": "Apache-2.0",
+    "authors": [
+        {
+            "name": "Tom Lous",
+            "email": "tomlous@gmail.com"
+        }
+    ],
     "require": {
-        "slim/slim": "2.*"
+        "slim/slim": "2.*",
+        "gabordemooij/redbean": "*"
     },
     "autoload": {
         "classmap": ["v1/lib/", "v1/models"]

@@ -15,7 +15,7 @@ namespace models;
 class Address implements \JsonSerializable {
 
     /**
-     * input/output address as string, base for address extracting or combined properties
+     * input/output addressNl as string, base for addressNl extracting or combined properties
      * @var string
      */
     private $addressString;
@@ -40,7 +40,7 @@ class Address implements \JsonSerializable {
 
 
     /**
-     * Actual street name of the address
+     * Actual street name of the addressNl
      * @var string
      */
     private $streetName;
@@ -58,7 +58,7 @@ class Address implements \JsonSerializable {
     private $streetDirection;
 
     /**
-     * Type of the address, like: PO Box, Apartment, Building, Floor, Office, Suite,
+     * Type of the addressNl, like: PO Box, Apartment, Building, Floor, Office, Suite,
      * @var string
      */
     private $addressType;
@@ -70,7 +70,7 @@ class Address implements \JsonSerializable {
     private $addressTypeIdentifier;
 
     /**
-     * Prefix local part before locality. For instance, if your hamlet/village/area appears in the address before the locality
+     * Prefix local part before locality. For instance, if your hamlet/village/area appears in the addressNl before the locality
      * @var string
      */
     private $subLocality;
@@ -111,7 +111,7 @@ class Address implements \JsonSerializable {
     // GETTERS & SETTERS
 
     /**
-     * input address as string, base for address extracting or combined properties
+     * input addressNl as string, base for addressNl extracting or combined properties
      * @param string $addressString
      * @throws \Exception
      */
@@ -125,7 +125,7 @@ class Address implements \JsonSerializable {
     }
 
     /**
-     * output address as string, concattenated properties of address
+     * output addressNl as string, concattenated properties of addressNl
      * @todo regernerate as option
      * @param bool $regenerate
      * @return string
@@ -139,7 +139,7 @@ class Address implements \JsonSerializable {
     }
 
     /**
-     * Type of the address, like: PO Box, Apartment, Building, Floor, Office, Suite,
+     * Type of the addressNl, like: PO Box, Apartment, Building, Floor, Office, Suite,
      * @param string $addressType
      * @throws \Exception
      */
@@ -153,7 +153,7 @@ class Address implements \JsonSerializable {
     }
 
     /**
-     * Type of the address, like: PO Box, Apartment, Building, Floor, Office, Suite,
+     * Type of the addressNl, like: PO Box, Apartment, Building, Floor, Office, Suite,
      * @return string
      */
     public function getAddressType()
@@ -278,7 +278,7 @@ class Address implements \JsonSerializable {
     }
 
     /**
-     * Prefix local part before locality. For instance, if your hamlet/village appears in the address before the locality
+     * Prefix local part before locality. For instance, if your hamlet/village appears in the addressNl before the locality
      * @param string $subLocality
      * @throws \Exception
      */
@@ -292,7 +292,7 @@ class Address implements \JsonSerializable {
     }
 
     /**
-     * Prefix local part before locality. For instance, if your hamlet/village appears in the address before the locality
+     * Prefix local part before locality. For instance, if your hamlet/village appears in the addressNl before the locality
      * @return string
      */
     public function getSubLocality()
@@ -349,7 +349,7 @@ class Address implements \JsonSerializable {
     }
 
     /**
-     * Actual street name of the address
+     * Actual street name of the addressNl
      * @param string $streetName
      * @throws \Exception
      */
@@ -363,7 +363,7 @@ class Address implements \JsonSerializable {
     }
 
     /**
-     * Actual street name of the address
+     * Actual street name of the addressNl
      * @return string
      */
     public function getStreetName()
@@ -471,7 +471,7 @@ class Address implements \JsonSerializable {
     // METHODS
 
     /**
-     * parses the addressstring into address parts for the address object
+     * parses the addressstring into addressNl parts for the addressNl object
      * @todo: very complex.
      */
     public function parseString(){
@@ -485,13 +485,13 @@ class Address implements \JsonSerializable {
         // Spinel 7  Berkel en Rodenrijd Nederland
         // Spinel 7  Berkel en Rodenrijs
 
-        // @todo: create intelligent parser that parses any address sting into parts
+        // @todo: create intelligent parser that parses any addressNl sting into parts
 
 
     }
 
     /**
-     * Generates an address string from address properties
+     * Generates an addressNl string from addressNl properties
      * @return string
      */
     public function generateString(){

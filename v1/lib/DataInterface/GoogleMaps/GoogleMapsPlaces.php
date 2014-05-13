@@ -739,7 +739,7 @@ class GoogleMapsPlaces extends DataInterface
         // lat, long
         $googleMapsPlace->setGeoLocation(new GeoLocation($result['geometry']['location']['lat'], $result['geometry']['location']['lng']));
 
-        // address
+        // addressNl
         if (isset($result['formatted_address']) || isset($result['vicinity'])) {
             if ($address === null) {
                 $address = new Address();

@@ -16,44 +16,56 @@ class KBOCompany implements \JsonSerializable
 {
 
     private $resultNum;
-    private $companyNumber;
+    private $companyVat;
     private $companyName;
-    private $address;
+    private $addressNl;
+    private $addressFr;
     private $detailUrl;
     private $startDate;
     private $legalTypes;
     private $status;
     private $numberOfEstablishments;
+    private $language;
+    private $phoneNumber;
+    private $faxNumber;
+    private $emailAddress;
+    private $website;
+    private $legalStatus;
 
+
+    const LANGUAGE_NL = 'nl';
+    const LANGUAGE_FR = 'fr';
 
     public function __construct()
     {
 
     }
 
-    public function setAddressParts($part1, $part2=null)
+    public function setAddressParts($language, $part1, $part2 = null)
     {
         $address = new Address();
 
-        $postalCodeTown = !$part2?$part1:$part2;
-        $streetHouseNumber = !$part2?null:$part1;
+        $postalCodeTown = !$part2 ? $part1 : $part2;
+        $streetHouseNumber = !$part2 ? null : $part1;
 
 
-
-        if($streetHouseNumber){
+        if ($streetHouseNumber) {
             // streetHouseNumber split
-            preg_match("/(\D+) (\d+)(.*)?/is", $streetHouseNumber, $matches);
-            if (count($matches) != 4) {
+            preg_match("/([^\d\(]+)(\((\D+)\))?(,(\D+))? (\d+)?(.*)?/is", $streetHouseNumber, $matches);
+            if (count($matches) != 8) {
                 throw new IncompatibleInputException('Not a valid street & housenumber `' . $streetHouseNumber . ' ` for KBO Company');
             }
             $address->setStreetName($matches[1]);
-            $address->setStreetNumber($matches[2]);
-            $address->setStreetNumberSuffix($matches[3]);
+            $address->setStreetType($matches[3] ? $matches[3] : $matches[5]);
+            if (is_numeric($matches[6])) {
+                $address->setStreetNumber($matches[6]);
+            }
+            $address->setStreetNumberSuffix($matches[7]);
         }
 
-        if($postalCodeTown){
+        if ($postalCodeTown) {
             // $postalCodeTown split
-            preg_match("/(\d+) (.*)/is", $postalCodeTown, $matches);
+            preg_match("/(\d+)?\s*(.*)/is", $postalCodeTown, $matches);
             if (count($matches) != 3) {
                 throw new IncompatibleInputException('Not a valid postalcode & town `' . $postalCodeTown . ' ` for KBO Company');
             }
@@ -61,10 +73,21 @@ class KBOCompany implements \JsonSerializable
             $address->setLocality($matches[2]);
         }
 
-        $address->setCountry('Belgium');
 
-        $this->address = $address;
+        if (!$this->getLanguage()) {
+            $this->setLanguage($language);
+        }
+
+        if ($language == self::LANGUAGE_FR) {
+            $address->setCountry('Belgique');
+            $this->addressFr = $address;
+
+        } else {
+            $address->setCountry('België');
+            $this->addressNl = $address;
+        }
     }
+
 
     public function resetLegalTypes()
     {
@@ -79,17 +102,17 @@ class KBOCompany implements \JsonSerializable
     /**
      * @param \Address $address
      */
-    public function setAddress(\Address $address)
+    public function setAddressNl(\Address $address)
     {
-        $this->address = $address;
+        $this->addressNl = $address;
     }
 
     /**
      * @return \Address
      */
-    public function getAddress()
+    public function getAddressNl()
     {
-        return $this->address;
+        return $this->addressNl;
     }
 
     /**
@@ -109,24 +132,27 @@ class KBOCompany implements \JsonSerializable
     }
 
     /**
-     * @param mixed $companyNumber
+     * @param mixed $companyVat
      * @throws \DataInterface\Exception\IncompatibleInputException
      */
-    public function setCompanyNumber($companyNumber)
+    public function setCompanyVat($companyVat)
     {
-        $companyNumber = preg_replace("/\D+/is", "", $companyNumber);
-        if (strlen($companyNumber) < 9) {
-            throw new IncompatibleInputException('Invalid value `' . $companyNumber . '` for KBO CompanyNumber');
+        $companyVat = preg_replace("/\D+/is", "", $companyVat);
+        if (strlen($companyVat) < 9 || strlen($companyVat) > 10) {
+            throw new IncompatibleInputException('Invalid value `' . $companyVat . '` for KBO CompanyVat');
         }
-        $this->companyNumber = $companyNumber;
+        if (strlen($companyVat) == 9) {
+            $companyVat = '0' . $companyVat;
+        }
+        $this->companyVat = $companyVat;
     }
 
     /**
      * @return string
      */
-    public function getCompanyNumber()
+    public function getCompanyVat()
     {
-        return $this->companyNumber;
+        return $this->companyVat;
     }
 
     /**
@@ -230,6 +256,121 @@ class KBOCompany implements \JsonSerializable
         return $this->status;
     }
 
+    /**
+     * @param \Address $addressFr
+     */
+    public function setAddressFr(\Address $addressFr)
+    {
+        $this->addressFr = $addressFr;
+    }
+
+    /**
+     * @return \Address
+     */
+    public function getAddressFr()
+    {
+        return $this->addressFr;
+    }
+
+    /**
+     * @param mixed $language
+     */
+    public function setLanguage($language)
+    {
+        if ($language == self::LANGUAGE_FR || self::LANGUAGE_NL) {
+            $this->language = $language;
+        }
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getLanguage()
+    {
+        return $this->language;
+    }
+
+    /**
+     * @param mixed $emailAddress
+     */
+    public function setEmailAddress($emailAddress)
+    {
+        $this->emailAddress = $emailAddress;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getEmailAddress()
+    {
+        return $this->emailAddress;
+    }
+
+    /**
+     * @param mixed $faxNumber
+     */
+    public function setFaxNumber($faxNumber)
+    {
+        $this->faxNumber = $faxNumber;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getFaxNumber()
+    {
+        return $this->faxNumber;
+    }
+
+    /**
+     * @param mixed $phoneNumber
+     */
+    public function setPhoneNumber($phoneNumber)
+    {
+        $this->phoneNumber = $phoneNumber;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getPhoneNumber()
+    {
+        return $this->phoneNumber;
+    }
+
+    /**
+     * @param mixed $website
+     */
+    public function setWebsite($website)
+    {
+        $this->website = $website;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getWebsite()
+    {
+        return $this->website;
+    }
+
+    /**
+     * @param mixed $legalStatus
+     */
+    public function setLegalStatus($legalStatus)
+    {
+        $this->legalStatus = $legalStatus;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getLegalStatus()
+    {
+        return $this->legalStatus;
+    }
+
+
     private function localeDateStringToTimestamp($dateString, $outFormat = '%Y-%m-%d')
     {
         $returnValue = null;
@@ -287,14 +428,21 @@ class KBOCompany implements \JsonSerializable
     {
         $obj = new \stdClass();
         $obj->resultNum = $this->getResultNum();
-        $obj->companyNumber = $this->getCompanyNumber();
+        $obj->companyVat = $this->getCompanyVat();
         $obj->name = $this->getCompanyName();
-        $obj->address = $this->getAddress();
+        $obj->addressNl = $this->getAddressNl();
+        $obj->addressFr = $this->getAddressFr();
+        $obj->language = $this->getLanguage();
         $obj->detailUrl = $this->getDetailUrl();
         $obj->startDate = $this->getStartDate();
         $obj->legalTypes = $this->getLegalTypes();
         $obj->status = $this->getStatus();
         $obj->numberOfEstablishments = $this->getNumberOfEstablishments();
+        $obj->phoneNumber = $this->getPhoneNumber();
+        $obj->faxNumber = $this->getFaxNumber();
+        $obj->emailAddress = $this->getEmailAddress();
+        $obj->website = $this->getWebsite();
+        $obj->legalStatus = $this->getLegalStatus();
         return $obj;
     }
 

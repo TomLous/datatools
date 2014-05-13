@@ -44,7 +44,7 @@ class Geocodefarm extends DataInterface
     const returnType = 'json';
 
     /**
-     * Request geoloaction for address string, passed as addressString or address (\Address) property in array, optional key param
+     * Request geoloaction for addressNl string, passed as addressString or addressNl (\Address) property in array, optional key param
      * @param array $params
      * @throws \DataInterface\Exception\IncompatibleInputException
      * @return array|null
@@ -66,11 +66,11 @@ class Geocodefarm extends DataInterface
             $inputAddress = new Address();
             $inputAddress->setAddressString($addressString);
             $inputAddress->parseString();
-        } elseif (isset($params['address']) && $params['address'] instanceof Address) {
-            $inputAddress = $params['address'];
+        } elseif (isset($params['addressNl']) && $params['addressNl'] instanceof Address) {
+            $inputAddress = $params['addressNl'];
             $addressString = $inputAddress->getAddressString();
         } else {
-            throw new IncompatibleInputException('Missing addressString or address property');
+            throw new IncompatibleInputException('Missing addressString or addressNl property');
         }
 
         if (isset($params['key']) && is_scalar($params['key'])) {
@@ -78,7 +78,7 @@ class Geocodefarm extends DataInterface
         }
 
 
-        // create a new URL for this request e.g. https://www.geocodefarm.com/api/forward/json/[key]/address
+        // create a new URL for this request e.g. https://www.geocodefarm.com/api/forward/json/[key]/addressNl
         $requestUrl = $this->buildUrl('forward', array($addressString),$customKey);
 
         // do request to Geocodefarms
@@ -90,7 +90,7 @@ class Geocodefarm extends DataInterface
     }
 
     /**
-     * Request address for latitude, longitude variable, passed as doubles (latitude, longitude) or geoLocation (\GeoLocation) property in array, optional key param
+     * Request addressNl for latitude, longitude variable, passed as doubles (latitude, longitude) or geoLocation (\GeoLocation) property in array, optional key param
      * @param array $params
      * @throws \DataInterface\Exception\IncompatibleInputException
      * @return array|null
@@ -205,8 +205,8 @@ class Geocodefarm extends DataInterface
         if (strlen($addressInfo['address_returned']) > 0) {
             $address->setAddressString($addressInfo['address_returned']);
             $address->parseString();
-        } elseif (strlen($addressInfo['address']) > 0) {
-            $address->setAddressString($addressInfo['address']);
+        } elseif (strlen($addressInfo['addressNl']) > 0) {
+            $address->setAddressString($addressInfo['addressNl']);
             $address->parseString();
         }
 
