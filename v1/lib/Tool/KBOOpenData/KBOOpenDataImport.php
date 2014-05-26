@@ -11,4 +11,26 @@ namespace Tool\KBOOpenData;
 
 class KBOOpenDataImport extends \Tool\Tool {
 
-} 
+
+    protected function handleToolSubmit()
+    {
+        $uploadedFileInfo = $this->fetchFileInfo('dataZipUpload');
+
+        $mimeType = $uploadedFileInfo['type'];
+
+        if(!in_array($mimeType, array('application/zip', 'application/x-zip-compressed', 'multipart/x-zip', 'application/x-compressed'))){
+            throw new \Exception('File not valid archive: '.$mimeType);
+        }
+
+        $zip = zip_open($uploadedFileInfo['tmp_name']);
+        if ($zip)
+        {
+            while ($zipEntry = zip_read($zip))
+            {
+                print_r($zipEntry);
+            }
+        }
+    }
+
+
+}

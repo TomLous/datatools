@@ -82,19 +82,10 @@ abstract class Tool {
      */
     public static function createSlimToolRoutes(Slim $app, $path = 'tools')
     {
-        $route = $app->get('/' . $path . '/:action/:tool/', function ($action, $tool) use ($app) {
-
-//
-
-
+        $routes = array();
+        $routes[] = $app->get('/' . $path . '/:action/:tool/', function ($action, $tool) use ($app) {
             // Set basic return data for the API
             $data = array();
-//            $data['success'] = false;
-//            $data['Meta'] = array();
-//            $data['Meta']['requestUri'] = $app->request()->getResourceUri();
-//            $data['Meta']['requestData'] = $app->request()->params();
-//            $data['Meta']['ip'] = $app->request()->getIp();
-//            $data['Meta']['ip'] = $app->request()->getIp();
 
             $toolClassName =  $tool . ucfirst($action);
 
@@ -121,8 +112,39 @@ abstract class Tool {
             }
 
 
-        });
-        return $route;
+        })->name('toolActionGet');
+
+        $routes[] = $app->post('/' . $path . '/:action/:tool/', function ($action, $tool) use ($app) {
+            // Set basic return data for the API
+            $data = array();
+
+            $toolClassName =  $tool . ucfirst($action);
+
+            try {
+                $className = '\\Tool\\' . $tool . '\\' . $toolClassName;
+
+                if (!class_exists($className)) {
+                    throw new \RuntimeException('Non existing Tool : `' . $action . '\\'. $toolClassName . '`');
+                }
+
+                $toolInstance = new $className($tool, $action);
+
+
+                $toolInstance->handleToolSubmit();
+
+
+            } catch (\Exception $e) { // Catch all other exceptions
+                $app->getLog()->warn(print_r($data + array('trace' => $e->getTrace()), true));
+                print $e->getMessage();
+
+            } catch (Exception $e) { // Catch all other exceptions
+                $app->getLog()->warn(print_r($data + array('trace' => $e->getTrace()), true));
+                print $e->getMessage();
+            }
+
+
+        })->name('toolActionPost');
+        return $routes;
     }
 
     /**
@@ -145,6 +167,30 @@ abstract class Tool {
 
         $this->slim->render($toolTemplate, array());
 
+    }
+
+    protected abstract function handleToolSubmit();
+
+    protected function fetchFileInfo($inputName){
+        if(!isset($_FILES) || !isset($_FILES[$inputName])){
+            throw new \Exception('Missing file upload for '.$inputName);
+        }
+
+        $uploadedFileInfo = $_FILES[$inputName];
+
+        if(in_array($uploadedFileInfo['error'], array(UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE))){
+            throw new \Exception('File exceeded allowed size', $uploadedFileInfo['error']);
+        }
+
+        if(in_array($uploadedFileInfo['error'], array(UPLOAD_ERR_PARTIAL, UPLOAD_ERR_NO_FILE))){
+            throw new \Exception('File missing or partially uploaded', $uploadedFileInfo['error']);
+        }
+
+        if(in_array($uploadedFileInfo['error'], array(UPLOAD_ERR_CANT_WRITE, UPLOAD_ERR_NO_TMP_DIR, UPLOAD_ERR_EXTENSION))){
+            throw new \Exception('File handling invalid server side', $uploadedFileInfo['error']);
+        }
+
+        return $uploadedFileInfo;
     }
 
 

@@ -51,3 +51,22 @@ $dataInterface = array(
     )
 );
 $app->environment()['DataInterface'] = $dataInterface;
+
+/**
+ * Environment specific global functions
+ * @todo refactor or make sure it's implemented everywhere
+ */
+require_once 'google/appengine/api/cloud_storage/CloudStorageTools.php';
+use google\appengine\api\cloud_storage\CloudStorageTools;
+
+function fileUploadUrl($redirectUrl=null){
+    global $GS_BUCKET_NAME;
+
+    if($redirectUrl === null){
+        $redirectUrl = $_SERVER['REQUEST_URI'];
+    }
+
+    $options = [ 'gs_bucket_name' => $GS_BUCKET_NAME];
+    $uploadUrl = CloudStorageTools::createUploadUrl($redirectUrl, $options);
+    return $uploadUrl;
+}

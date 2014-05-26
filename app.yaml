@@ -5,9 +5,24 @@ api_version: 1
 threadsafe: yes
 
 handlers:
-- url: /favicon\.ico
-  static_files: favicon.ico
-  upload: favicon\.ico
+- url: /favicon.ico
+  static_files: assets/images/favicon.ico
+  upload: assets/images/favicon.ico
+
+- url: /robots.txt
+  static_files: assets/robots.txt
+  upload: assets/robots.txt
+
+- url: /js
+  static_dir: assets/js
+
+- url: /css
+  static_dir: assets/css
+
+
+- url: /images
+  static_dir: assets/images
+
 
 # env info
 - url: /env
@@ -20,3 +35,6 @@ handlers:
 # api root
 - url: /v1/.*
   script: v1/index.php
+
+
+

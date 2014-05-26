@@ -50,3 +50,16 @@ $dataInterface = array(
     )
 );
 $app->environment()['DataInterface'] = $dataInterface;
+
+/**
+ * Environment specific global functions
+ * @todo refactor or make sure it's implemented everywhere
+ */
+
+function fileUploadUrl($redirectUrl=null){
+    if($redirectUrl === null){
+        $redirectUrl = $_SERVER['REQUEST_URI'];
+    }
+
+    return $redirectUrl;
+}
