@@ -20,6 +20,8 @@ require_once($configFile);
  */
 $app->config('debug', true);
 $app->config('mode', $_ENV['APP_ENV']);
+$app->config('templates.path', 'templates');
+
 
 $log = $app->getLog();
 $log->setEnabled(true);

@@ -163,7 +163,7 @@ abstract class DataInterface
             header("Content-Type: application/json");
             print json_encode($data);
 
-        });
+        })->name('DataInterfacePost');
         return $route;
     }
 

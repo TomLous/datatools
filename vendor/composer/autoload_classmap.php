@@ -18,6 +18,8 @@ return array(
     'DataInterface\\KBOPublicSearch\\KBOCompany' => $baseDir . '/v1/lib/DataInterface/KBOPublicSearch/KBOCompany.php',
     'DataInterface\\KBOPublicSearch\\KBOPublicSearchCrawler' => $baseDir . '/v1/lib/DataInterface/KBOPublicSearch/KBOPublicSearchCrawler.php',
     'Slim\\SysLogWriter' => $baseDir . '/v1/lib/Slim/SysLogwriter.php',
+    'Tool\\KBOOpenData\\KBOOpenDataImport' => $baseDir . '/v1/lib/Tool/KBOOpenData/KBOOpenDataImport.php',
+    'Tool\\Tool' => $baseDir . '/v1/lib/Tool/Tool.php',
     'models\\Address' => $baseDir . '/v1/models/Address.php',
     'models\\GeoLocation' => $baseDir . '/v1/models/GeoLocation.php',
 );
