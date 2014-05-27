@@ -50,6 +50,10 @@ $dataInterface = array(
     )
 );
 $app->environment()['DataInterface'] = $dataInterface;
+$app->environment()['tmpStoragePath'] = $TMP_STORAGE_PATH;
+
+
+R::setup("mysql:host=${DB_HOST};dbname=${DB_NAME}", $DB_USER, $DB_PASSWORD); //mysql or mariaDB
 
 /**
  * Environment specific global functions

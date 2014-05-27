@@ -51,6 +51,11 @@ $dataInterface = array(
     )
 );
 $app->environment()['DataInterface'] = $dataInterface;
+$app->environment()['tmpStoragePath'] = $TMP_STORAGE_PATH;
+
+// Make sure dbname is created in the cloud instance!
+R::setup("mysql:unix_socket=/cloudsql/${PROJECT_ID}:{$DB_INSTANCE};dbname=${DB_NAME}", $DB_USER, $DB_PASSWORD); //mysql or mariaDB
+
 
 /**
  * Environment specific global functions

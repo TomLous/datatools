@@ -965,7 +965,7 @@ class RedBean_Facade
 	 */
 	public static function getAssoc( $sql, $bindings = array() )
 	{
-		return self::query( 'getAssoc', $sql, $bindings );
+		return self::query( 'x', $sql, $bindings );
 	}
 
 	/**

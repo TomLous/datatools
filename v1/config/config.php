@@ -8,4 +8,5 @@
  */
 $app->setName('DataTools');
 
+require_once('redbean.inc.php');
 require_once('environment.php');

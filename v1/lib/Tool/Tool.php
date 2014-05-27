@@ -16,7 +16,7 @@ abstract class Tool {
      * Refernce to the slim framework app
      * @var null|Slim
      */
-    private $slim;
+    protected $slim;
 
     private $tool;
     private $action;
@@ -179,14 +179,17 @@ abstract class Tool {
         $uploadedFileInfo = $_FILES[$inputName];
 
         if(in_array($uploadedFileInfo['error'], array(UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE))){
+            @unlink($uploadedFileInfo['tmp_name']);
             throw new \Exception('File exceeded allowed size', $uploadedFileInfo['error']);
         }
 
         if(in_array($uploadedFileInfo['error'], array(UPLOAD_ERR_PARTIAL, UPLOAD_ERR_NO_FILE))){
+            @unlink($uploadedFileInfo['tmp_name']);
             throw new \Exception('File missing or partially uploaded', $uploadedFileInfo['error']);
         }
 
         if(in_array($uploadedFileInfo['error'], array(UPLOAD_ERR_CANT_WRITE, UPLOAD_ERR_NO_TMP_DIR, UPLOAD_ERR_EXTENSION))){
+            @unlink($uploadedFileInfo['tmp_name']);
             throw new \Exception('File handling invalid server side', $uploadedFileInfo['error']);
         }
 

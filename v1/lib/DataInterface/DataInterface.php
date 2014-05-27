@@ -26,7 +26,7 @@ abstract class DataInterface
      * Refernce to the slim framework app
      * @var null|Slim
      */
-    private $slim;
+    protected $slim;
 
     /**
      * @var int remainingQueries

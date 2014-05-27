@@ -17,5 +17,6 @@
     },
     "autoload": {
         "classmap": ["v1/lib/", "v1/models"]
-    }
+    },
+    "include-path" : ["vendor/gabordemooij/redbean/RedBean/"]
 }
