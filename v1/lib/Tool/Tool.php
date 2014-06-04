@@ -20,6 +20,8 @@ abstract class Tool {
 
     private $tool;
     private $action;
+    private $logs;
+    private $errors;
 
     /**
      * @var bool meta variable to set bound state for class
@@ -35,6 +37,8 @@ abstract class Tool {
 
         $this->tool = $tool;
         $this->action = $action;
+        $this->logs = array();
+        $this->errors = array();
 
         // sets statics
         $this->_setLateStaticBinding();
@@ -73,6 +77,25 @@ abstract class Tool {
         }
     }
 
+    protected function log($message, $level=\Slim\Log::INFO, $data=array()){
+        $data['message'] = $message;
+        $this->logs[] = $message;
+        $this->slim->getLog()->log($level, print_r($data, true));
+    }
+
+    protected function error($message, $level=\Slim\Log::ERROR, $data=array()){
+        $data['message'] = $message;
+        $this->errors[] = $message;
+        $this->slim->getLog()->log($level, print_r($data, true));
+    }
+
+    protected function getErrors(){
+        return $this->errors;
+    }
+
+    protected function getLogs(){
+        return $this->logs;
+    }
     /**
      * Creates a POST API interface for DataInterface API's
      * Just call POST request to [$path]/[classname]/[method] and POST an array of parameters as form-data

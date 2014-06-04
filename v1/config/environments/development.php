@@ -60,10 +60,25 @@ R::setup("mysql:host=${DB_HOST};dbname=${DB_NAME}", $DB_USER, $DB_PASSWORD); //m
  * @todo refactor or make sure it's implemented everywhere
  */
 
+//function fileUploadUrl($redirectUrl=null){
+//    if($redirectUrl === null){
+//        $redirectUrl = $_SERVER['REQUEST_URI'];
+//    }
+//
+//    return $redirectUrl;
+//}
+
+require_once 'google/appengine/api/cloud_storage/CloudStorageTools.php';
+use google\appengine\api\cloud_storage\CloudStorageTools;
+
 function fileUploadUrl($redirectUrl=null){
+    global $GS_BUCKET_NAME;
+
     if($redirectUrl === null){
         $redirectUrl = $_SERVER['REQUEST_URI'];
     }
 
-    return $redirectUrl;
+    $options = [ 'gs_bucket_name' => $GS_BUCKET_NAME];
+    $uploadUrl = CloudStorageTools::createUploadUrl($redirectUrl, $options);
+    return $uploadUrl;
 }

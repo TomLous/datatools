@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS `KBOOpenData_address` (
   `HouseNumber` varchar(22) CHARACTER SET utf8 DEFAULT NULL COMMENT '22(X)',
   `Box` varchar(20) CHARACTER SET utf8 DEFAULT NULL COMMENT '20(X)',
   `ExtraAddressInfo` varchar(80) CHARACTER SET utf8 DEFAULT NULL COMMENT '80(X)',
-  `DateStrikingOff` date DEFAULT NULL
+  `DateStrikingOff` char(10) CHARACTER SET utf8 NOT NULL COMMENT 'XX-XX-XXXX'
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- ----------------------------
@@ -71,12 +71,12 @@ CREATE TABLE IF NOT EXISTS `KBOOpenData_denomination` (
 -- ----------------------------
 -- DROP TABLE IF EXISTS `KBOOpenData_enterprise`;
 CREATE TABLE IF NOT EXISTS `KBOOpenData_enterprise` (
-  `EnterpiseNumber` varchar(12) CHARACTER SET utf8 NOT NULL COMMENT '9999.999.999',
+  `EnterpriseNumber` varchar(12) CHARACTER SET utf8 NOT NULL COMMENT '9999.999.999',
   `Status` char(2) CHARACTER SET utf8 NOT NULL COMMENT 'XX',
   `JuridicalSituation` char(3) CHARACTER SET utf8 NOT NULL COMMENT 'XXX',
   `TypeOfEnterprise` char(1) CHARACTER SET utf8 NOT NULL COMMENT 'X',
   `JuridicalForm` char(3) CHARACTER SET utf8 DEFAULT NULL COMMENT 'XXX',
-  `StartDate` date NOT NULL
+  `StartDate` char(10) CHARACTER SET utf8 NOT NULL COMMENT 'XX-XX-XXXX'
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- ----------------------------
@@ -85,8 +85,8 @@ CREATE TABLE IF NOT EXISTS `KBOOpenData_enterprise` (
 -- DROP TABLE IF EXISTS `KBOOpenData_establishment`;
 CREATE TABLE IF NOT EXISTS `KBOOpenData_establishment` (
   `EstablishmentNumber` varchar(13) CHARACTER SET utf8 NOT NULL DEFAULT '' COMMENT '9.999.999.999',
-  `StartDate` date NOT NULL,
-  `EnterpiseNumber` varchar(12) CHARACTER SET utf8 NOT NULL COMMENT '9999.999.999'
+  `StartDate` char(10) CHARACTER SET utf8 NOT NULL COMMENT 'XX-XX-XXXX',
+  `EnterpriseNumber` varchar(12) CHARACTER SET utf8 NOT NULL COMMENT '9999.999.999'
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- ----------------------------
