@@ -9,6 +9,7 @@
 namespace Tool\KBOOpenData;
 
 use R;
+use PclZip;
 
 
 class KBOOpenDataImport extends \Tool\Tool
@@ -192,6 +193,17 @@ class KBOOpenDataImport extends \Tool\Tool
         // creat target prefix
         $newFilePathPrefix = $targetPath . $newFilePrefix;
 
+        require_once('pclzip.lib.php');
+        $archive = new PclZip($zipFilePath);
+
+        $list  =  $archive->listContent();
+
+//        print_r($archive);
+        print_r($zipFilePath);
+        print_r($list);
+        print_r($archive->errorInfo(true));
+        exit();
+
 
         $zip = zip_open($zipFilePath);
 
@@ -224,6 +236,8 @@ class KBOOpenDataImport extends \Tool\Tool
             zip_close($zip);
         } else {
             $fp = fopen($zipFilePath,'rb');
+
+
             throw new \RuntimeException('Could not open archive file: ' . $zipFilePath. ' fopen result:'. $fp);
         }
 

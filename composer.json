@@ -18,5 +18,5 @@
     "autoload": {
         "classmap": ["v1/lib/", "v1/models"]
     },
-    "include-path" : ["vendor/gabordemooij/redbean/RedBean/"]
+    "include-path" : ["vendor/gabordemooij/redbean/RedBean/","vendor/phpconcept.net/pclzip-2-8-2/"]
 }

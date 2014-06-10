@@ -7,4 +7,5 @@ $baseDir = dirname($vendorDir);
 
 return array(
     $vendorDir . '/gabordemooij/redbean/RedBean',
+    $vendorDir . '/phpconcept.net/pclzip-2-8-2',
 );
