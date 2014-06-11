@@ -1,5 +1,7 @@
 <?php
 
+$list = \Tool\KBOOpenData\KBOOpenDataImport::getOpenDataFileList();
+
 $formAction = fileUploadUrl();
 ?>
 <!doctype html>
@@ -24,6 +26,7 @@ $formAction = fileUploadUrl();
 <body>
 
 <div class="wrapper">
+    <h2>Upload KBO Open Data.zip</h2>
     <p>Upload Files obtaind from KBO Open Data</p>
     <p>Login <a href="https://kbopub.economie.fgov.be/kbo-open-data/login" target="_blank">here</a> and download appropriate zip file (either complete db or update)</p>
     <form action="<?=$formAction;?>" id="importForm" name="importForm" enctype="multipart/form-data" method="post">
@@ -31,6 +34,21 @@ $formAction = fileUploadUrl();
         <input type="file" name="dataZipUpload" id="dataZipUpload">
         <input type="submit">
     </form>
+
+    <p style="height: 80px"></p>
+    <h2>Select KBO Open Data.zip</h2>
+    <p>Or select from list</p>
+    <table style="width: 100%">
+        <tr><th>Date</th><th>Full file</th><th>Update File</th></tr>
+        <?php foreach($list as $record){ ?>
+            <tr>
+            <td><?=$record['year'].' - '. $record['month'];?></td>
+            <td><a href="?action=downloadOpenDataFile&url=<?=$record['fullFileUrl'];?>&filename=<?=$record['fullFileName'];?>" title="<?=$record['fullFileName'];?>"><?=substr($record['fullFileName'], strrpos($record['fullFileName'],'_')+1);?></a></td>
+            <td><a href="?action=downloadOpenDataFile&url=<?=$record['updateFileUrl'];?>&filename=<?=$record['updateFileName'];?>" title="<?=$record['updateFileName'];?>"><?=substr($record['updateFileName'], strrpos($record['fullFileName'],'_')+1);?></a></td>
+            </tr>
+
+        <?php } ?>
+    </table>
 
 </div>
 

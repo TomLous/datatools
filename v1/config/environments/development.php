@@ -8,7 +8,7 @@
  */
 
 // include gitignored globals from inc file
-$configFile =   $_ENV['APP_ENV'] . '.inc.php';
+$configFile = $_ENV['APP_ENV'] . '.inc.php';
 $absPath = realpath(dirname(__FILE__) . DIRECTORY_SEPARATOR . $configFile);
 if (!file_exists($absPath)) {
     throw new Exception('Unknown environmental config param file : ' . $absPath);
@@ -41,16 +41,27 @@ $dataInterface = array(
     'GoogleMaps' => array(
         'GoogleMapsPlaces' => array(
             'apiKey' => $GOOGLE_MAPS_PLACES_APIKEY, // server api key as created in developer console
-            'limit'  => $GOOGLE_MAPS_PLACES_LIMIT, // max. request units per 24h (1000, but 100000 after registering)
+            'limit' => $GOOGLE_MAPS_PLACES_LIMIT, // max. request units per 24h (1000, but 100000 after registering)
             'nearbysearchUnit' => $GOOGLE_MAPS_PLACES_NEARBYSEARCH_UNIT, // request unit for nearby search (1)
-            'textsearchUnit' => $GOOGLE_MAPS_PLACES_TEXTSEARCH_UNIT,  // request unit for text search (10)
-            'radarsearchUnit' =>  $GOOGLE_MAPS_PLACES_RADARSEARCH_UNIT, // request unit for radar search (5)
-            'detailhUnit' =>  $GOOGLE_MAPS_PLACES_DETAIL_UNIT // request unit for detail search (1)
+            'textsearchUnit' => $GOOGLE_MAPS_PLACES_TEXTSEARCH_UNIT, // request unit for text search (10)
+            'radarsearchUnit' => $GOOGLE_MAPS_PLACES_RADARSEARCH_UNIT, // request unit for radar search (5)
+            'detailhUnit' => $GOOGLE_MAPS_PLACES_DETAIL_UNIT // request unit for detail search (1)
         ),
     )
 );
+
+$tool = array(
+    'KBOOpenData' => array(
+        'KBOOpenDataImport' => array(
+            'KBOUsername' => $KBO_USERNAME, // KBO Open data username
+            'KBOPassword' => $KBO_PASSWORD, // KBO Open data password
+        ),
+    ),
+);
 $app->environment()['DataInterface'] = $dataInterface;
+$app->environment()['Tool'] = $tool;
 $app->environment()['tmpStoragePath'] = $TMP_STORAGE_PATH;
+$app->environment()['storagePath'] = $STORAGE_PATH;
 
 
 R::setup("mysql:host=${DB_HOST};dbname=${DB_NAME}", $DB_USER, $DB_PASSWORD); //mysql or mariaDB
@@ -71,14 +82,15 @@ R::setup("mysql:host=${DB_HOST};dbname=${DB_NAME}", $DB_USER, $DB_PASSWORD); //m
 require_once 'google/appengine/api/cloud_storage/CloudStorageTools.php';
 use google\appengine\api\cloud_storage\CloudStorageTools;
 
-function fileUploadUrl($redirectUrl=null){
+function fileUploadUrl($redirectUrl = null)
+{
     global $GS_BUCKET_NAME;
 
-    if($redirectUrl === null){
+    if ($redirectUrl === null) {
         $redirectUrl = $_SERVER['REQUEST_URI'];
     }
 
-    $options = [ 'gs_bucket_name' => $GS_BUCKET_NAME];
+    $options = ['gs_bucket_name' => $GS_BUCKET_NAME];
     $uploadUrl = CloudStorageTools::createUploadUrl($redirectUrl, $options);
     return $uploadUrl;
 }

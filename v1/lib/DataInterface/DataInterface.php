@@ -86,7 +86,11 @@ abstract class DataInterface
         // if the final config is found, set a property
         if (is_array($config)) {
             foreach ($config as $property => $value) {
-                if (property_exists($this, $property)) {
+                $staticSetterMethod = 'set' . ucfirst($property);
+
+                if (method_exists($classNamespace, $staticSetterMethod)) {
+                    call_user_func_array(array($classNamespace, $staticSetterMethod), array($value));
+                }elseif (property_exists($this, $property)) {
                     $this->$property = $value;
                 }
             }

@@ -9,8 +9,10 @@
 namespace Tool;
 
 use Slim\Slim;
+use Tool\KBOOpenData\KBOOpenDataImport;
 
-abstract class Tool {
+abstract class Tool
+{
 
     /**
      * Refernce to the slim framework app
@@ -44,8 +46,6 @@ abstract class Tool {
         $this->_setLateStaticBinding();
 
 
-
-
         // reference to slim framework
         $this->slim = Slim::getInstance();
 
@@ -70,32 +70,44 @@ abstract class Tool {
         // if the final config is found, set a property
         if (is_array($config)) {
             foreach ($config as $property => $value) {
-                if (property_exists($this, $property)) {
+                $staticSetterMethod = 'set' . ucfirst($property);
+
+                if (method_exists($classNamespace, $staticSetterMethod)) {
+                    call_user_func_array(array($classNamespace, $staticSetterMethod), array($value));
+                }elseif (property_exists($this, $property)) {
                     $this->$property = $value;
                 }
             }
+
+
+
         }
     }
 
-    protected function log($message, $level=\Slim\Log::INFO, $data=array()){
+    protected function log($message, $level = \Slim\Log::INFO, $data = array())
+    {
         $data['message'] = $message;
         $this->logs[] = $message;
         $this->slim->getLog()->log($level, print_r($data, true));
     }
 
-    protected function error($message, $level=\Slim\Log::ERROR, $data=array()){
+    protected function error($message, $level = \Slim\Log::ERROR, $data = array())
+    {
         $data['message'] = $message;
         $this->errors[] = $message;
         $this->slim->getLog()->log($level, print_r($data, true));
     }
 
-    protected function getErrors(){
+    protected function getErrors()
+    {
         return $this->errors;
     }
 
-    protected function getLogs(){
+    protected function getLogs()
+    {
         return $this->logs;
     }
+
     /**
      * Creates a POST API interface for DataInterface API's
      * Just call POST request to [$path]/[classname]/[method] and POST an array of parameters as form-data
@@ -110,19 +122,31 @@ abstract class Tool {
             // Set basic return data for the API
             $data = array();
 
-            $toolClassName =  $tool . ucfirst($action);
+            $toolClassName = $tool . ucfirst($action);
 
             try {
                 $className = '\\Tool\\' . $tool . '\\' . $toolClassName;
 
                 if (!class_exists($className)) {
-                    throw new \RuntimeException('Non existing Tool : `' . $action . '\\'. $toolClassName . '`');
+                    throw new \RuntimeException('Non existing Tool : `' . $action . '\\' . $toolClassName . '`');
                 }
 
                 $toolInstance = new $className($tool, $action);
 
+                $requestAction = $app->request->get('action');
+                $renderToolPage = true;
 
-                $toolInstance->renderToolPage();
+                if($requestAction && method_exists($toolInstance, $requestAction)){
+                    $parameters = $app->request->get();
+                    unset($parameters['action']);
+
+                    $renderToolPage = call_user_func_array(array($toolInstance, $requestAction), $parameters);
+                }
+
+
+                if($renderToolPage){
+                    $toolInstance->renderToolPage();
+                }
 
 
             } catch (\Exception $e) { // Catch all other exceptions
@@ -141,13 +165,13 @@ abstract class Tool {
             // Set basic return data for the API
             $data = array();
 
-            $toolClassName =  $tool . ucfirst($action);
+            $toolClassName = $tool . ucfirst($action);
 
             try {
                 $className = '\\Tool\\' . $tool . '\\' . $toolClassName;
 
                 if (!class_exists($className)) {
-                    throw new \RuntimeException('Non existing Tool : `' . $action . '\\'. $toolClassName . '`');
+                    throw new \RuntimeException('Non existing Tool : `' . $action . '\\' . $toolClassName . '`');
                 }
 
                 $toolInstance = new $className($tool, $action);
@@ -174,8 +198,9 @@ abstract class Tool {
      * Breaks static references for inheretid classes and makes late static binding work as expected
      * @see: http://stackoverflow.com/questions/5513484/php-static-variables-in-an-abstract-parent-class-question-is-in-the-sample-code
      */
-    private function _setLateStaticBinding(){
-        if(!static::$_bound){
+    private function _setLateStaticBinding()
+    {
+        if (!static::$_bound) {
             // Workaround
             $tmp = 'x';
 //            static::$_bound = &$tmp;
@@ -184,8 +209,9 @@ abstract class Tool {
         }
     }
 
-    protected  function renderToolPage(){
-        $toolTemplate =  $this->action . DIRECTORY_SEPARATOR . $this->tool . DIRECTORY_SEPARATOR . 'tool.php';
+    protected function renderToolPage()
+    {
+        $toolTemplate = $this->action . DIRECTORY_SEPARATOR . $this->tool . DIRECTORY_SEPARATOR . 'tool.php';
 
 
         $this->slim->render($toolTemplate, array());
@@ -194,24 +220,25 @@ abstract class Tool {
 
     protected abstract function handleToolSubmit();
 
-    protected function fetchFileInfo($inputName){
-        if(!isset($_FILES) || !isset($_FILES[$inputName])){
-            throw new \Exception('Missing file upload for '.$inputName);
+    protected function fetchFileInfo($inputName)
+    {
+        if (!isset($_FILES) || !isset($_FILES[$inputName])) {
+            throw new \Exception('Missing file upload for ' . $inputName);
         }
 
         $uploadedFileInfo = $_FILES[$inputName];
 
-        if(in_array($uploadedFileInfo['error'], array(UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE))){
+        if (in_array($uploadedFileInfo['error'], array(UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE))) {
             @unlink($uploadedFileInfo['tmp_name']);
             throw new \Exception('File exceeded allowed size', $uploadedFileInfo['error']);
         }
 
-        if(in_array($uploadedFileInfo['error'], array(UPLOAD_ERR_PARTIAL, UPLOAD_ERR_NO_FILE))){
+        if (in_array($uploadedFileInfo['error'], array(UPLOAD_ERR_PARTIAL, UPLOAD_ERR_NO_FILE))) {
             @unlink($uploadedFileInfo['tmp_name']);
             throw new \Exception('File missing or partially uploaded', $uploadedFileInfo['error']);
         }
 
-        if(in_array($uploadedFileInfo['error'], array(UPLOAD_ERR_CANT_WRITE, UPLOAD_ERR_NO_TMP_DIR, UPLOAD_ERR_EXTENSION))){
+        if (in_array($uploadedFileInfo['error'], array(UPLOAD_ERR_CANT_WRITE, UPLOAD_ERR_NO_TMP_DIR, UPLOAD_ERR_EXTENSION))) {
             @unlink($uploadedFileInfo['tmp_name']);
             throw new \Exception('File handling invalid server side', $uploadedFileInfo['error']);
         }

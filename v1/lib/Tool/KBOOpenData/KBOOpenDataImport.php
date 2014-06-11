@@ -8,6 +8,7 @@
 
 namespace Tool\KBOOpenData;
 
+
 use R;
 use PclZip;
 
@@ -17,44 +18,80 @@ class KBOOpenDataImport extends \Tool\Tool
     const tableNamePrefix = 'KBOOpenData_';
 
 
+    const kboLoginUrl = 'https://kbopub.economie.fgov.be/kbo-open-data/static/j_spring_security_check';
+    const kboOpenDataListUrl = 'https://kbopub.economie.fgov.be/kbo-open-data/affiliation/xml/?files';
+    const kboOpenDataZipBaseUrl = 'https://kbopub.economie.fgov.be/kbo-open-data/affiliation/xml/';
+
+    private static $KBOLoggedIn = false;
+    private static $KBOJSessionId = null;
+    private static $KBOUsername = null;
+    private static $KBOPassword = null;
+
+
     protected function handleToolSubmit()
     {
-        // Retrieve the $_FILES info for the upload (throws errors if something is wrong)
-        $uploadedFileInfo = $this->fetchFileInfo('dataZipUpload');
-
         $filesToDelete = array();
 
-        // fetch mime type
-        $mimeType = $uploadedFileInfo['type'];
+        try{
+            // Retrieve the $_FILES info for the upload (throws errors if something is wrong)
+            $uploadedFileInfo = $this->fetchFileInfo('dataZipUpload');
 
-        // add to delete files when all is done
-        $filesToDelete[$uploadedFileInfo['name']] = $uploadedFileInfo['tmp_name'];
 
-        // check if valid archive
-        if (!in_array($mimeType, array('application/zip', 'application/x-zip-compressed', 'multipart/x-zip', 'application/x-compressed'))) {
+
+            // fetch mime type
+            $mimeType = $uploadedFileInfo['type'];
+
+            // add to delete files when all is done
+            $filesToDelete[$uploadedFileInfo['name']] = $uploadedFileInfo['tmp_name'];
+
+            // check if valid archive
+            if (!in_array($mimeType, array('application/zip', 'application/x-zip-compressed', 'multipart/x-zip', 'application/x-compressed'))) {
+                $this->deleteFiles($filesToDelete);
+                throw new \Exception('File not valid archive: ' . $mimeType);
+            }
+
+            $this->handleZipFile($uploadedFileInfo['tmp_name']);
+
+
+            // delete the files (clean up)
             $this->deleteFiles($filesToDelete);
-            throw new \Exception('File not valid archive: ' . $mimeType);
+        }catch (\Exception $e){
+            // delete the files (clean up)
+            $this->deleteFiles($filesToDelete);
+
+            throw $e;
         }
 
 
-        // define locations for extracted files (assume tmpStoragePath ends with seperator) @todo: check it?
-        $tmpPath = $this->slim->environment()['tmpStoragePath'];
-        $newFilePrefix = date('YmdHis_');
-
-        // load csv file references from zip
-        $csvFileLocations = $this->extractCSVFilesFromZip($uploadedFileInfo['tmp_name'], $tmpPath, $newFilePrefix);
-        $filesToDelete += $csvFileLocations;
-
-        print "<pre>";
-        $this->checkCreateDatabase();
-
-        $this->handleCSVFiles($csvFileLocations);
-
-        // delete the files (clean up)
-        $this->deleteFiles($filesToDelete);
-
-
         print_r($this->getErrors());
+    }
+
+    protected function handleZipFile($zipFilePath)
+    {
+
+        $filesToDelete = array();
+
+        try {
+
+            // define locations for extracted files (assume tmpStoragePath ends with seperator) @todo: check it?
+            $tmpPath = $this->slim->environment()['tmpStoragePath'];
+            $newFilePrefix = date('YmdHis_');
+
+            // load csv file references from zip
+            $csvFileLocations = $this->extractCSVFilesFromZip($zipFilePath, $tmpPath, $newFilePrefix);
+
+            $filesToDelete += $csvFileLocations;
+
+            $this->checkCreateDatabase();
+
+            $this->handleCSVFiles($csvFileLocations);
+        } catch (\Exception $e) {
+            // delete the files (clean up)
+            $this->deleteFiles($filesToDelete);
+
+            throw $e;
+        }
+
     }
 
     private function handleCSVFiles($csvFileLocations)
@@ -107,7 +144,7 @@ class KBOOpenDataImport extends \Tool\Tool
 
         }
 
-        print 'num records: ' . $rowCount    . nl2br(PHP_EOL);
+        print 'num records: ' . $rowCount . nl2br(PHP_EOL);
 
         fclose($csvFilePointer);
 
@@ -193,16 +230,16 @@ class KBOOpenDataImport extends \Tool\Tool
         // creat target prefix
         $newFilePathPrefix = $targetPath . $newFilePrefix;
 
-        require_once('pclzip.lib.php');
-        $archive = new PclZip($zipFilePath);
-
-        $list  =  $archive->listContent();
-
-//        print_r($archive);
-        print_r($zipFilePath);
-        print_r($list);
-        print_r($archive->errorInfo(true));
-        exit();
+//        require_once('pclzip.lib.php');
+//        $archive = new PclZip($zipFilePath);
+//
+//        $list = $archive->listContent();
+//
+////        print_r($archive);
+//        print_r($zipFilePath);
+//        print_r($list);
+//        print_r($archive->errorInfo(true));
+//        exit();
 
 
         $zip = zip_open($zipFilePath);
@@ -235,10 +272,7 @@ class KBOOpenDataImport extends \Tool\Tool
             }
             zip_close($zip);
         } else {
-            $fp = fopen($zipFilePath,'rb');
-
-
-            throw new \RuntimeException('Could not open archive file: ' . $zipFilePath. ' fopen result:'. $fp);
+            throw new \RuntimeException('Could not open archive file: ' . $zipFilePath);
         }
 
         return $csvFileLocations;
@@ -255,6 +289,9 @@ class KBOOpenDataImport extends \Tool\Tool
         }
     }
 
+    /**
+     * loops through all sql files in sub dir and executes them
+     */
     private function checkCreateDatabase()
     {
         // get relative SQL dir
@@ -287,5 +324,204 @@ class KBOOpenDataImport extends \Tool\Tool
 
     }
 
+    protected function downloadOpenDataFile($url, $filename)
+    {
+        if (!self::$KBOLoggedIn) {
+            self::getOpenDataLogIn();
+        }
+
+        if (!$url || !$filename) {
+            $this->error('Missing URL (' . $url . ') or filename (' . $filename . ')');
+            return true;
+        }
+
+
+        $storagePath = $this->slim->environment()['storagePath'];
+        $zipFilePath = $storagePath . $filename;
+
+        $success = copy($url, $zipFilePath);
+
+        if (!$success) {
+            $this->error('Cannot copy URL (' . $url . ') to  path ' . $zipFilePath . ')');
+            return true;
+        }
+
+
+        $this->handleZipFile($zipFilePath);
+
+
+        return false;
+    }
+
+    /**
+     * Returns an array of open data zip files from https://kbopub.economie.fgov.be/kbo-open-data/
+     * @return array
+     */
+    public static function getOpenDataFileList()
+    {
+        if (!self::$KBOLoggedIn) {
+            self::getOpenDataLogIn();
+        }
+
+
+        $options =
+            array("http" =>
+                array(
+                    "method" => "GET",
+                    "header" => "Accept-language: nl\r\n" .
+                        "Cookie: JSESSIONID=" . self::$KBOJSessionId . "\r\n",
+                )
+            );
+
+        $context = stream_context_create($options);
+        $result = file_get_contents(self::kboOpenDataListUrl, false, $context);
+
+        preg_match_all('`<td>(?<month>\w+)\s(?<year>\d+)</td>\s+<td><a href="(?<fullFileUri>files[^"]*)[^>]+>(?<fullFileName>[^<]*)</a></td>\s*<td><a href="(?<updateFileUri>files[^"]*)[^>]+>(?<updateFileName>[^<]*)</a></td>`is', $result, $matches, PREG_SET_ORDER);
+
+        if (count($matches) <= 0) {
+            self::openDataLogOut();
+            return array();
+        }
+
+
+        $returnData = array();
+
+        foreach ($matches as $record) {
+
+            $monthNum = self::localeDateStringToTimestamp("1 {$record['month']} {$record['year']}", 'nl_BE', '%e %B %Y', '%m');
+            $returnData[] = array(
+                'month' => $monthNum,
+                'monthName' => $record['month'],
+                'year' => $record['year'],
+                'fullFileUrl' => (strlen($record['fullFileName']) > 0 ? self::kboOpenDataZipBaseUrl . $record['fullFileUri'] : ''),
+                'fullFileName' => $record['fullFileName'],
+                'updateFileUrl' => (strlen($record['updateFileName']) > 0 ? self::kboOpenDataZipBaseUrl . $record['updateFileUri'] : ''),
+                'updateFileName' => $record['updateFileName'],
+            );
+        }
+
+        return $returnData;
+    }
+
+    /**
+     * convert a local date string to applicable format or timestamp
+     * @param $dateString
+     * @param $locale
+     * @param string $inFormat
+     * @param null $outFormat
+     * @return int|null|string
+     */
+    protected static function localeDateStringToTimestamp($dateString, $locale, $inFormat = '%e %B %Y', $outFormat = null)
+    {
+        $returnValue = null;
+
+
+        $currentLocale = setlocale(LC_TIME, 0);
+        setlocale(LC_TIME, $locale);
+        $ftimeArray = strptime($dateString, $inFormat);
+        setlocale(LC_TIME, $currentLocale);
+
+        if ($ftimeArray !== false) {
+            $returnValue = mktime(
+                $ftimeArray['tm_hour'],
+                $ftimeArray['tm_min'],
+                $ftimeArray['tm_sec'],
+                $ftimeArray['tm_mon'] + 1,
+                $ftimeArray['tm_mday'],
+                $ftimeArray['tm_year'] + 1900
+            );
+
+            if ($outFormat) {
+                $returnValue = strftime($outFormat, $returnValue);
+            }
+        }
+
+        return $returnValue;
+    }
+
+
+    /**
+     * Log in into KBO open data sytem, save sesion id for cookie param
+     * @return bool
+     */
+    protected static function getOpenDataLogIn()
+    {
+        $postData = array();
+        $postData['j_username'] = self::$KBOUsername;
+        $postData['j_password'] = self::$KBOPassword;
+
+        $data = http_build_query($postData);
+
+        $options =
+            array("http" =>
+                array(
+                    "method" => "POST",
+                    "header" => "Accept-language: nl\r\n" .
+                        "Content-type: application/x-www-form-urlencoded\r\n"
+                        . "Content-Length: " . strlen($data) . "\r\n",
+                    "content" => $data,
+                    "follow_location" => false
+                )
+            );
+
+        $context = stream_context_create($options);
+        $result = file_get_contents(self::kboLoginUrl . '?' . $data, false, $context);
+
+
+        $matches = preg_grep('/^Set-Cookie: /is', $http_response_header);
+
+
+        $sessionCookieHeaders = preg_grep('/JSESSIONID/is', $matches);
+
+        if (!$sessionCookieHeaders || count($sessionCookieHeaders) == 0) {
+            self::openDataLogOut();
+            return false;
+        }
+
+        $cookieHeader = current($sessionCookieHeaders);
+
+        preg_match('/JSESSIONID=([^;]+)/is', $cookieHeader, $sessionData);
+
+        if (!$sessionData || count($sessionData) < 1) {
+            self::openDataLogOut();
+            return false;
+        }
+
+        //Set-Cookie: JSESSIONID=xxxxx.worker4b; Path=/kbo-open-data/; HttpOnly
+
+        self::$KBOJSessionId = $sessionData[1];
+        self::$KBOLoggedIn = true;
+
+        return true;
+
+    }
+
+    /**
+     * Log out of KBO open Data syetm
+     */
+    protected static function openDataLogOut()
+    {
+        self::$KBOLoggedIn = false;
+        self::$KBOJSessionId = null;
+    }
+
+
+    /**
+     * Needed for setting static properties from environment
+     * @param string $KBOPassword
+     */
+    public static function setKBOPassword($KBOPassword)
+    {
+        self::$KBOPassword = $KBOPassword;
+    }
+
+    /**
+     * Needed for setting static properties from environment
+     * @param string $KBOUsername
+     */
+    public static function setKBOUsername($KBOUsername)
+    {
+        self::$KBOUsername = $KBOUsername;
+    }
 
 }
