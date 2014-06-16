@@ -1,0 +1,49 @@
+Options Indexes FollowSymLinks Includes ExecCGI
+RewriteEngine On
+RewriteBase /
+
+#- url: /favicon.ico
+#  static_files: assets/images/favicon.ico
+#  upload: assets/images/favicon.ico
+#
+RewriteRule ^favicon.ico$ /assets/images/favicon.ico [NC,L,QSA]
+
+#- url: /robots.txt
+#  static_files: assets/robots.txt
+#  upload: assets/robots.txt
+RewriteRule ^robots.txt$ /assets/robots.txt [NC,L,QSA]
+
+#
+#- url: /js
+#  static_dir: assets/js
+RewriteRule ^js/(.*)$ /assets/js/$1 [NC,L,QSA]
+
+#
+#- url: /css
+#  static_dir: assets/css
+RewriteRule ^css/(.*)$ /assets/css/$1 [NC,L,QSA]
+
+
+#- url: /images
+#  static_dir: assets/images
+RewriteRule ^images/(.*)$ /assets/images/$1 [NC,L,QSA]
+
+
+# env info
+#- url: /env
+#  script: env.php
+RewriteRule ^env /env.php [NC,L,QSA]
+
+# env info
+#- url: /test
+#  script: test.php
+RewriteRule ^test /test.php [NC,L,QSA]
+
+
+# api root
+#- url: /v1/.*
+#  script: v1/index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^v1/(.*) /v1/index.php [NC,L,QSA]
+
