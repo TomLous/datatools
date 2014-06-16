@@ -28,90 +28,105 @@ class KBOOpenDataImport extends \Tool\Tool
     private static $KBOPassword = null;
 
 
-    protected function handleToolSubmit()
+    protected function handleToolSubmit($postData = array())
     {
-        $filesToDelete = array();
-
-        try{
-            // Retrieve the $_FILES info for the upload (throws errors if something is wrong)
-            $uploadedFileInfo = $this->fetchFileInfo('dataZipUpload');
 
 
+        print '<pre>';
 
+        $uploadedFilesInfo = array();
+        $allowedMimeTypes = array();
+        $methodName = null;
+
+        // Retrieve the $_FILES info for the upload (throws errors if something is wrong)
+        if ($postData['uploadType'] == 'zip') {
+            $uploadedFilesInfo = $this->fetchFilesInfo('dataZipUpload');
+            $allowedMimeTypes = array('application/zip', 'application/x-zip-compressed', 'multipart/x-zip', 'application/x-compressed', 'binary/octet-stream');
+            $methodName = 'handleZipFiles';
+        } elseif ($postData['uploadType'] == 'csv') {
+            $uploadedFilesInfo = $this->fetchFilesInfo('dataCSVUpload');
+            $allowedMimeTypes = array('text/csv');
+            $methodName = 'handleCSVFiles';
+        } else {
+            throw new \Exception('Unknown upload type: ' . $postData['uploadType']);
+        }
+
+//        print_r($uploadedFilesInfo);
+
+        $filePaths = array();
+        $tmpPath = $this->slim->environment()['tmpStoragePath'];
+        $newFilePrefix = date('YmdHis_');
+
+        foreach ($uploadedFilesInfo as $uploadedFileInfo) {
             // fetch mime type
             $mimeType = $uploadedFileInfo['type'];
 
             // add to delete files when all is done
-            $filesToDelete[$uploadedFileInfo['name']] = $uploadedFileInfo['tmp_name'];
+            $this->markFilePathForDeletion($uploadedFileInfo['tmp_name']);
 
             // check if valid archive
-            if (!in_array($mimeType, array('application/zip', 'application/x-zip-compressed', 'multipart/x-zip', 'application/x-compressed'))) {
-                $this->deleteFiles($filesToDelete);
-                throw new \Exception('File not valid archive: ' . $mimeType);
+            if (!in_array($mimeType, $allowedMimeTypes)) {
+                throw new \Exception('File `' . $uploadedFileInfo['name'] . '` not valid mime type: ' . $mimeType);
             }
 
-            $this->handleZipFile($uploadedFileInfo['tmp_name']);
 
+            $newFileName = $newFilePrefix.$uploadedFileInfo['name'];
+            $newFilePath = $tmpPath.$newFileName;
 
-            // delete the files (clean up)
-            $this->deleteFiles($filesToDelete);
-        }catch (\Exception $e){
-            // delete the files (clean up)
-            $this->deleteFiles($filesToDelete);
+            @copy($uploadedFileInfo['tmp_name'], $newFilePath);
+            $this->markFilePathForDeletion($newFilePath);
 
-            throw $e;
+            $filePaths[$newFileName] = $newFilePath;
+
         }
 
+        call_user_func_array(array($this, $methodName), array($filePaths));
 
-        print_r($this->getErrors());
+
     }
 
-    protected function handleZipFile($zipFilePath)
+    protected function handleZipFiles($zipFilePaths)
     {
+        // define locations for extracted files (assume tmpStoragePath ends with seperator) @todo: check it?
+        $tmpPath = $this->slim->environment()['tmpStoragePath'];
+        $newFilePrefix = date('YmdHis_');
 
-        $filesToDelete = array();
+        $csvFileLocations = array();
 
-        try {
-
-            // define locations for extracted files (assume tmpStoragePath ends with seperator) @todo: check it?
-            $tmpPath = $this->slim->environment()['tmpStoragePath'];
-            $newFilePrefix = date('YmdHis_');
+        foreach($zipFilePaths as $zipFilePath){
 
             // load csv file references from zip
-            $csvFileLocations = $this->extractCSVFilesFromZip($zipFilePath, $tmpPath, $newFilePrefix);
+            $csvFileLocations += $this->extractCSVFilesFromZip($zipFilePath, $tmpPath, $newFilePrefix);
 
-            $filesToDelete += $csvFileLocations;
-
-            $this->checkCreateDatabase();
-
-            $this->handleCSVFiles($csvFileLocations);
-        } catch (\Exception $e) {
-            // delete the files (clean up)
-            $this->deleteFiles($filesToDelete);
-
-            throw $e;
         }
+
+        $this->markFilePathForDeletion($csvFileLocations);
+
+        $this->handleCSVFiles($csvFileLocations);
+
 
     }
 
     private function handleCSVFiles($csvFileLocations)
     {
+        $this->checkCreateDatabase();
+
         foreach ($csvFileLocations as $fileName => $filePath) {
             print_r($fileName);
-            if (preg_match("/^(\w+)_insert/is", $fileName, $matches)) {
+            if (preg_match("/([^_]+)_insert/is", $fileName, $matches)) {
                 $tableName = self::tableNamePrefix . $matches[1];
 
                 $this->loopCSVRecords($filePath, $tableName, 'insertRowIntoTable', true);
 
-            } elseif (preg_match("/^(\w+)_delete/is", $fileName, $matches)) {
+            } elseif (preg_match("/([^_]+)_delete/is", $fileName, $matches)) {
                 $tableName = self::tableNamePrefix . $matches[1];
 
                 $this->loopCSVRecords($filePath, $tableName, 'deleteRowFromTable', true);
 
-            } elseif (preg_match("/^(\w+)\.csv$/is", $fileName, $matches)) {
+            } elseif (preg_match("/([^_]+)\.csv$/is", $fileName, $matches)) {
                 $tableName = self::tableNamePrefix . $matches[1];
 
-                print $tableName . nl2br(PHP_EOL);
+                print nl2br(PHP_EOL) . 'table: '. $tableName . nl2br(PHP_EOL);
 
 
                 $this->truncateTable($tableName);
@@ -124,6 +139,7 @@ class KBOOpenDataImport extends \Tool\Tool
 
     private function loopCSVRecords($csvFilePath, $tableName, $methodName, $firstLineIsHeader = true)
     {
+
         $csvFilePointer = fopen($csvFilePath, "r");
 
         $rowCount = 0;
@@ -138,6 +154,7 @@ class KBOOpenDataImport extends \Tool\Tool
                 $header = $rowData;
             } else {
                 call_user_func_array(array($this, $methodName), array($rowData, $tableName, $header, $rowCount));
+                $this->logRowAction($rowData, $tableName, substr($methodName,0,6), $header, $rowCount);
             }
 
             $rowCount++;
@@ -148,6 +165,34 @@ class KBOOpenDataImport extends \Tool\Tool
 
         fclose($csvFilePointer);
 
+    }
+
+    private function logRowAction($rowData, $tableName, $action, $header = null, $rowNum = 0){
+        // only log the mutations on main tables
+        if(in_array($tableName, array(self::tableNamePrefix.'enterprise', self::tableNamePrefix.'establishment',self::tableNamePrefix.'meta'))){
+            $keyValue = current($rowData);
+            $keyName = $header !== null?current($header):'EntityNumber';
+
+            reset($rowData);
+            reset($header);
+
+            $getPreviousDataQuery = "SELECT * FROM `{$tableName}` WHERE `{$keyName}`=?";
+
+            $oldData = R::getRow($getPreviousDataQuery, array($keyValue));
+
+            if(is_array($oldData)){
+                $oldData = array_values($oldData);
+            }else{
+                $oldData = array();
+            }
+
+            if(count(array_diff($rowData,$oldData)) > 0){
+                $logTableName = self::tableNamePrefix . 'mutationlog';
+                $insertIntoLogQuery = "INSERT INTO `$logTableName` (`tableName`, `recordKey`, `data_old`, `data_new`, `action`) VALUES(?,?,?,?,?);";
+
+                R::exec($insertIntoLogQuery, array($tableName, $keyValue, json_encode($oldData), json_encode($rowData), $action));
+            }
+        }
     }
 
 
@@ -204,6 +249,11 @@ class KBOOpenDataImport extends \Tool\Tool
             $truncateQuery = "TRUNCATE TABLE `{$tableName}`";
 //            $truncateData = array(':tableName' => $tableName);
             R::exec($truncateQuery);
+
+            $logTableName = self::tableNamePrefix . 'mutationlog';
+            $deleteAddLogsForTableQuery = "DELETE FROM `{$logTableName}` WHERE `tableName`=? AND (`action`=? OR `action`=?)";
+            R::exec($deleteAddLogsForTableQuery, array($tableName, 'insert', 'update'));
+
         } catch (\Exception $e) {
             $error['sqlError'] = $e->getMessage();
             $error['query'] = $truncateQuery;
@@ -278,16 +328,6 @@ class KBOOpenDataImport extends \Tool\Tool
         return $csvFileLocations;
     }
 
-    /**
-     * clean up by deleting files passed as array
-     * @param $csvFileLocations
-     */
-    private function deleteFiles($csvFileLocations)
-    {
-        foreach ($csvFileLocations as $filePath) {
-            @unlink($filePath);
-        }
-    }
 
     /**
      * loops through all sql files in sub dir and executes them

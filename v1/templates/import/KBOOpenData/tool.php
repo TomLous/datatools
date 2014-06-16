@@ -1,6 +1,8 @@
 <?php
 
-$list = \Tool\KBOOpenData\KBOOpenDataImport::getOpenDataFileList();
+//$list = \Tool\KBOOpenData\KBOOpenDataImport::getOpenDataFileList();
+
+$list = array();
 
 $formAction = fileUploadUrl();
 ?>
@@ -26,12 +28,14 @@ $formAction = fileUploadUrl();
 <body>
 
 <div class="wrapper">
+    <!--
     <h2>Upload KBO Open Data.zip</h2>
     <p>Upload Files obtaind from KBO Open Data</p>
     <p>Login <a href="https://kbopub.economie.fgov.be/kbo-open-data/login" target="_blank">here</a> and download appropriate zip file (either complete db or update)</p>
     <form action="<?=$formAction;?>" id="importForm" name="importForm" enctype="multipart/form-data" method="post">
+        <input type="hidden" name="uploadType" value="zip">
         <label for="dataZipUpload">KBO Data zip-file</label>
-        <input type="file" name="dataZipUpload" id="dataZipUpload">
+        <input type="file" name="dataZipUpload" id="dataZipUpload" accept=".zip">
         <input type="submit">
     </form>
 
@@ -49,6 +53,16 @@ $formAction = fileUploadUrl();
 
         <?php } ?>
     </table>
+    -->
+
+    <p style="height: 80px"></p>
+    <h2>Upload csv files manually</h2>
+    <form action="<?=$formAction;?>" id="importForm" name="importForm" enctype="multipart/form-data" method="post">
+        <input type="hidden" name="uploadType" value="csv">
+        <label for="dataCSVUpload">KBO Data csv-files</label>
+        <input type="file" name="dataCSVUpload[]" id="dataCSVUpload"  accept=".csv" multiple>
+        <input type="submit">
+    </form>
 
 </div>
 

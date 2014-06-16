@@ -15,7 +15,9 @@ if (preg_match('/^localhost/', $_SERVER['HTTP_HOST'])) {
     $_ENV['APP_ENV'] = 'development';
 // if host ends with GAE url (can be prefixed with version)
 } elseif (preg_match('/datatools01.appspot.com$/', $_SERVER['HTTP_HOST'])) {
-    $_ENV['APP_ENV'] = 'production';
+    $_ENV['APP_ENV'] = 'googleappengine';
+} elseif (preg_match('/datatools-datlinq.rhcloud.com$/', $_SERVER['HTTP_HOST'])) {
+    $_ENV['APP_ENV'] = 'openshift';
 } else {
     throw new Exception('Unknown environment: ' . $_SERVER['HTTP_HOST']);
 }

@@ -25,6 +25,8 @@ abstract class Tool
     private $logs;
     private $errors;
 
+    private $filesToDelete;
+
     /**
      * @var bool meta variable to set bound state for class
      */
@@ -41,6 +43,7 @@ abstract class Tool
         $this->action = $action;
         $this->logs = array();
         $this->errors = array();
+        $this->filesToDelete = array();
 
         // sets statics
         $this->_setLateStaticBinding();
@@ -84,7 +87,16 @@ abstract class Tool
         }
     }
 
-    protected function log($message, $level = \Slim\Log::INFO, $data = array())
+    /**
+     * General destructor method
+     */
+    function __destruct()
+    {
+        $this->cleanUpFiles();
+    }
+
+
+        protected function log($message, $level = \Slim\Log::INFO, $data = array())
     {
         $data['message'] = $message;
         $this->logs[] = $message;
@@ -177,7 +189,7 @@ abstract class Tool
                 $toolInstance = new $className($tool, $action);
 
 
-                $toolInstance->handleToolSubmit();
+                $toolInstance->handleToolSubmit($app->request->post());
 
 
             } catch (\Exception $e) { // Catch all other exceptions
@@ -220,30 +232,84 @@ abstract class Tool
 
     protected abstract function handleToolSubmit();
 
-    protected function fetchFileInfo($inputName)
+    protected function fetchFilesInfo($inputName)
     {
         if (!isset($_FILES) || !isset($_FILES[$inputName])) {
             throw new \Exception('Missing file upload for ' . $inputName);
         }
 
-        $uploadedFileInfo = $_FILES[$inputName];
+        $files = $_FILES[$inputName];
 
-        if (in_array($uploadedFileInfo['error'], array(UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE))) {
-            @unlink($uploadedFileInfo['tmp_name']);
-            throw new \Exception('File exceeded allowed size', $uploadedFileInfo['error']);
+        if(!is_array($files['name'])){
+            $newStructure = array(
+                'name'=>array($files['name']),
+                'type'=>array($files['type']),
+                'tmp_name'=>array($files['tmp_name']),
+                'error'=>array($files['error']),
+                'size'=>array($files['size']),
+            );
+            $files = $newStructure;
         }
 
-        if (in_array($uploadedFileInfo['error'], array(UPLOAD_ERR_PARTIAL, UPLOAD_ERR_NO_FILE))) {
-            @unlink($uploadedFileInfo['tmp_name']);
-            throw new \Exception('File missing or partially uploaded', $uploadedFileInfo['error']);
+        $numFiles  = count($files['name']);
+
+        $uploadedFiles = array();
+
+
+        for($n=0;$n<$numFiles;$n++){
+
+            if (in_array($files['error'][$n], array(UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE))) {
+                foreach($files['tmp_name'] as $tmpName){
+                    $this->markFilePathForDeletion($tmpName);
+                }
+                throw new \Exception('File '.$files['name'][$n].' exceeded allowed size', $files['error'][$n]);
+            }
+
+            if (in_array($files['error'][$n], array(UPLOAD_ERR_PARTIAL, UPLOAD_ERR_NO_FILE))) {
+                foreach($files['tmp_name'] as $tmpName){
+                    $this->markFilePathForDeletion($tmpName);
+                }
+                throw new \Exception('File  '.$files['name'][$n].' missing or partially uploaded', $files['error'][$n]);
+            }
+
+            if (in_array($files['error'][$n], array(UPLOAD_ERR_CANT_WRITE, UPLOAD_ERR_NO_TMP_DIR, UPLOAD_ERR_EXTENSION))) {
+                foreach($files['tmp_name'] as $tmpName){
+                    $this->markFilePathForDeletion($tmpName);
+                }
+                throw new \Exception('File  '.$files['name'][$n].' handling invalid server side', $files['error'][$n]);
+            }
+
+            $uploadedFiles[$n] = array(
+                'name' => $files['name'][$n],
+                'tmp_name' => $files['tmp_name'][$n],
+                'type' => $files['type'][$n],
+                'error' => $files['error'][$n],
+                'size' => $files['size'][$n],
+            );
         }
 
-        if (in_array($uploadedFileInfo['error'], array(UPLOAD_ERR_CANT_WRITE, UPLOAD_ERR_NO_TMP_DIR, UPLOAD_ERR_EXTENSION))) {
-            @unlink($uploadedFileInfo['tmp_name']);
-            throw new \Exception('File handling invalid server side', $uploadedFileInfo['error']);
+        return $uploadedFiles;
+    }
+
+    protected function markFilePathForDeletion($pathOrArray){
+        if(is_array($pathOrArray)){
+            foreach($pathOrArray as $path){
+                $this->filesToDelete[$path] = $path;
+            }
+        }else{
+            $this->filesToDelete[$pathOrArray] = $pathOrArray;
         }
 
-        return $uploadedFileInfo;
+    }
+
+    /**
+     * clean up by deleting files
+     */
+    protected  function cleanUpFiles()
+    {
+        foreach ($this->filesToDelete as $filePath) {
+            @unlink($filePath);
+        }
     }
 
 
