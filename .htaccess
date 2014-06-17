@@ -32,12 +32,12 @@ RewriteRule ^images/(.*)$ /assets/images/$1 [NC,L,QSA]
 # env info
 #- url: /env
 #  script: env.php
-RewriteRule ^env /env.php [NC,L,QSA]
+RewriteRule ^env$ /env.php [NC,L,QSA]
 
 # env info
 #- url: /test
 #  script: test.php
-RewriteRule ^test /test.php [NC,L,QSA]
+RewriteRule ^test$ /test.php [NC,L,QSA]
 
 
 # api root
@@ -46,4 +46,15 @@ RewriteRule ^test /test.php [NC,L,QSA]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^v1/(.*) /v1/index.php [NC,L,QSA]
+
+
+php_value upload_max_filesize  2000M
+php_value post_max_size 2000M
+php_value max_execution_time  0
+php_flag display_startup_errors on
+php_flag display_errors on
+php_flag html_errors on
+php_flag log_errors on
+php_value error_log  /var/lib/openshift/539ef465e0b8cd0f2c000657/app-root/logs/phperrors.log
+
 
