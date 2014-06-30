@@ -65,7 +65,7 @@ $app->environment()['tmpStoragePath'] = $TMP_STORAGE_PATH;
 $app->environment()['storagePath'] = $STORAGE_PATH;
 
 // Make sure dbname is created in the cloud instance!
-R::setup("mysql:host=${DB_HOST};port={$DB_PORT};dbname=${DB_NAME}", $DB_USER, $DB_PASSWORD); //mysql or mariaDB
+R::setup("mysql:host={$DB_HOST};port={$DB_PORT};dbname={$DB_NAME}", $DB_USER, $DB_PASSWORD); //mysql or mariaDB
 
 
 

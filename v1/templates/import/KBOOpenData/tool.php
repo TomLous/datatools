@@ -28,7 +28,8 @@ $formAction = fileUploadUrl();
 <body>
 
 <div class="wrapper">
-    <!--
+
+    <?php if($SUPPORTS_ZIP){ ?>
     <h2>Upload KBO Open Data.zip</h2>
     <p>Upload Files obtaind from KBO Open Data</p>
     <p>Login <a href="https://kbopub.economie.fgov.be/kbo-open-data/login" target="_blank">here</a> and download appropriate zip file (either complete db or update)</p>
@@ -53,7 +54,7 @@ $formAction = fileUploadUrl();
 
         <?php } ?>
     </table>
-    -->
+    <?php } //if($SUPPORTS_ZIP) ?>
 
     <p style="height: 80px"></p>
     <h2>Upload csv files manually</h2>
