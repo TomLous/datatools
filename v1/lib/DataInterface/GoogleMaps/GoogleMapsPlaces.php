@@ -489,6 +489,8 @@ class GoogleMapsPlaces extends DataInterface
             if (method_exists(__NAMESPACE__ . '\GoogleMapsPlaceTypes', $methodName)) {
                 $types = call_user_func(array(__NAMESPACE__ . '\GoogleMapsPlaceTypes', $methodName));
             }
+        }else{
+            throw new IncompatibleInputException('Missing types or typesCategory property');
         }
 
 
@@ -733,7 +735,7 @@ class GoogleMapsPlaces extends DataInterface
         // basic info
         $googleMapsPlace->setId($result['id']);
         $googleMapsPlace->setReference($result['reference']);
-        $googleMapsPlace->setName($result['name']);
+        $googleMapsPlace->setName(isset($result['name'])?$result['name']:'');
 
 
         // lat, long
