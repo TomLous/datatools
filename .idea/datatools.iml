@@ -33,17 +33,15 @@
     <orderEntry type="module-library">
       <library name="PHP">
         <CLASSES>
-          <root url="file:///usr/local/google_appengine/php/sdk" />
           <root url="file://$MODULE_DIR$/vendor/gabordemooij/redbean" />
-          <root url="file://$MODULE_DIR$/vendor/phpconcept.net/pclzip-2-8-2" />
           <root url="file://$MODULE_DIR$/vendor/slim/slim" />
+          <root url="file://$MODULE_DIR$/vendor/phpconcept.net/pclzip-2-8-2" />
           <root url="file://$MODULE_DIR$/vendor/composer" />
         </CLASSES>
         <SOURCES>
-          <root url="file:///usr/local/google_appengine/php/sdk" />
           <root url="file://$MODULE_DIR$/vendor/gabordemooij/redbean" />
-          <root url="file://$MODULE_DIR$/vendor/phpconcept.net/pclzip-2-8-2" />
           <root url="file://$MODULE_DIR$/vendor/slim/slim" />
+          <root url="file://$MODULE_DIR$/vendor/phpconcept.net/pclzip-2-8-2" />
           <root url="file://$MODULE_DIR$/vendor/composer" />
         </SOURCES>
       </library>

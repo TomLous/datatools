@@ -48,6 +48,10 @@ $dataInterface = array(
             'radarsearchUnit' => $GOOGLE_MAPS_PLACES_RADARSEARCH_UNIT, // request unit for radar search (5)
             'detailhUnit' => $GOOGLE_MAPS_PLACES_DETAIL_UNIT // request unit for detail search (1)
         ),
+        'GoogleMapsGeocoding' => array(
+            'apiKey' => $GOOGLE_MAPS_GEO_APIKEY, // server api key as created in developer console
+            'limit' => $GOOGLE_MAPS_GEO_LIMIT, // max. request units per 24h (1000, but 100000 after registering)
+        ),
     )
 );
 
